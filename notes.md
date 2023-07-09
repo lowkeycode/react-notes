@@ -285,3 +285,16 @@ Why useReducer:
 - Actions are objects that describe how to update state with a type and payload
 - Dispatch functions are used to trigger state updates by sending actions from event handles to the reducer
 - Updating the state with useReducer also causes re-renders
+
+### useState vs useReducer
+
+useState:
+- Single independent pieces of state
+- Simple
+- Should be the default go to
+
+useReducer:
+- Related or complex state
+- State updates need to happen together
+- Too many event handlers? Use useReducers
+- Little more complex (Easy once redux clicks)
