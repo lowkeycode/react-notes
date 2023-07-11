@@ -298,3 +298,148 @@ useReducer:
 - State updates need to happen together
 - Too many event handlers? Use useReducers
 - Little more complex (Easy once redux clicks)
+
+
+## Routing & SPAs
+
+### Vite 
+
+Using vite as a build tool run `npm create vite` and you can select a start from different frameworks...pretty cool.
+
+We used create-react-app prior to this as it comes setup with eslint and many other things and iw fine for learning. Vite however is the reommended build tool from the react team.
+
+To setup eslint we run `npm i eslint vite-plugin-eslint eslint-config-react-app --save-dev`
+
+Then we needs to create an `eslintrc.json` to extends the default rules of eslint with the react rules we just installed
+
+```json
+// eslintrc.json
+{
+  "extends": "react-app"
+}
+```
+
+Then we need to configure our vite project with the `vite.config.js`. We import eslint from vite-plugin-eslint and add it to the plugins array
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+import eslint from 'vite-plugin-eslint '
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react(), eslint],
+})
+
+```
+
+Now eslint is running in our project
+
+### Routes
+React needs 3rd party libraries to get additional functionality. Routing isn't built in. S owe add `npm i react-router-dom`. You know routing so its sorta self explanatory. But we import the browser router, routes and route. This is the traditional routing strategy. Then a route will get a path and an element to render when the url has that path. `*` will catch wildcard routes so we can render a 404.
+
+```jsx
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+
+function App() {
+  return (
+    <BrowserRouter>
+      <h1>Yeah buddy</h1>
+      <Routes>
+        <Route path='/' element={<Home />}/>
+        <Route path='product' element={<Product />}/>
+        <Route path='pricing' element={<Pricing />}/>
+        <Route path='*' element={<PageNotFound />}/>
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
+export default App
+
+```
+
+### CSS Modules
+
+These are baked into react and will scope styles to the component only. All you need to do is create a css file that follows the naming convention matching the component. Ex.) `Nav.module.css`. Then in the styles make sure you are not using element tags first as it will break out of the component scoping. Ex.) Don't use `ul {display: flex}` as it will apply to all ul's. Instead use `.list {display: flex}` or `.nav ul {display: flex}`.
+
+**UMD  Global & Other random errors**
+
+After adding a `jsconfig.json` then removing it. I started getting typescript errors everywhere. I implemented a basic jsconfig.json as per VS Code docs after 2 1/2hrs of struggling to figure out what the fuck went wrong.
+
+```json
+// jsconfig.json
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "jsx": "preserve",
+  },
+  "exclude": ["node_modules", "**/node_modules/*"]
+}
+```
+
+
+### Nested Routes
+
+Nested routes can be wrapped in a parent `Route` tag and will be relative to the parent url. Then we use it as a regular Route tag to render a child route component inside it. To tell React where to render it we need to also use the `<Outlet>` component inside the parent component. It behaves similar to the `{props.children}` I suppose.
+
+Additionally we can specify the index attribute to make a component the default component to be shown. With nested routes provide the duplicate with the index attribute. In this instance when `localhost/app` is visited the cities component will be rendered by default. Note: The url WILL be `localhost/app` in that default instance not `localhost/app/cities`.
+
+
+```jsx
+function App() {
+  return (
+        <BrowserRouter>
+            <Routes>
+              <Route index element={<Homepage />} />
+              <Route path="product" element={<Product />} />
+              <Route path="pricing" element={<Pricing />} />
+              <Route path="login" element={<Login />} />
+              <Route path="app" element={<AppLayout />}>
+                <Route index element={<p>Cities</p>}></Route>
+                <Route path="cities" element={<p>Cities</p>}></Route>
+                <Route path="countries" element={<p>Countries</p>}></Route>
+                <Route path="form" element={<p>Form</p>}></Route>
+              </Route>
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+        </BrowserRouter>
+  );
+}
+```
+```jsx
+function AppLayout() {
+  return (
+    <div className={styles.app}>
+      <Sidebar />
+    </div>
+  );
+}
+```
+```jsx
+function Sidebar() {
+  return (
+    <div className={styles.sidebar}>
+      <Logo />
+      <AppNav />
+
+      // OUTLET HERE 
+      <Outlet/>
+
+      <footer className={styles.footer}>
+        <p className={styles.copyright}>
+          &copy; Copyright {new Date().getFullYear()} by WorldWise Inc.
+        </p>
+      </footer>
+    </div>
+  );
+}
+```
+
+Notice we can use the outlet a child further down the tree and it still works.
+
+
+###
