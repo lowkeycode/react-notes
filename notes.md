@@ -1,5 +1,6 @@
-***try not to rm -rf these ones...***
+**_try not to rm -rf these ones..._**
 👋 See ya later 1000 or so lines of notes...
+
 # React
 
 ## Custom Hooks, Refs & More State
@@ -7,10 +8,12 @@
 ### useRef
 
 With React we don't manually touch the DOM, we let React do it. React provides us with a "ref" which is a reference.
+
 - Essentially a box we can put any data to be preserved between renders in.
 - Has a `.current` property that we use to read and write to.
 
 2 Use cases:
+
 1. - Persist state across renders
 2. - Select & store DOM elements
 
@@ -20,12 +23,14 @@ With React we don't manually touch the DOM, we let React do it. React provides u
 #### State vs Refs
 
 State:
+
 - Persist state
 - Updating causes re-renders
 - Immutable
 - Asynchronous
 
 Refs:
+
 - Persist state
 - Updating DOESNT cause a re-render
 - Mutable
@@ -35,12 +40,11 @@ Here we set the initial useRef state to null which is common. Then we add the `r
 
 ```jsx
 function Search({ query, setQuery }) {
-
   const inputEl = useRef(null);
 
   useEffect(() => {
     inputEl.current.focus();
-  }, [])
+  }, []);
 
   return (
     <input
@@ -58,6 +62,7 @@ function Search({ query, setQuery }) {
 ### Custom Hooks
 
 2 pieces we can reuse:
+
 1. UI - Components
 2. Logic - Functions or custom hooks
 
@@ -67,7 +72,6 @@ If the logic you want to reuse doesn't contain any hooks, just create a reusable
 - Allow us to use non-visual logic
 - A custom hook should have one purpose to make it reusable and portable
 - Rules of hooks still apply
-
 
 In our app.js we use our custom hook called useMovies and pass in the required arguments. Below the app.js we see the useMovies hook is composed of 4 hooks. 3 useStates and a useEffect.
 
@@ -107,7 +111,6 @@ export default function App() {
 }
 ```
 
-
 ```jsx
 // useMovie.js
 import { useEffect, useState } from "react";
@@ -115,7 +118,6 @@ import { useEffect, useState } from "react";
 const KEY = "e3e85fc8";
 
 export function useMovies(query, callback) {
-
   const [movies, setMovies] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -169,10 +171,9 @@ export function useMovies(query, callback) {
     };
   }, [query, callback]);
 
-  return { movies, isLoading, error }
+  return { movies, isLoading, error };
 }
 ```
-
 
 ## useReducer
 
@@ -188,31 +189,29 @@ import { useReducer, useState } from "react";
 
 const initialState = {
   count: 0,
-  step: 1
-}
+  step: 1,
+};
 
 function reducer(state, action) {
   console.log(state);
   console.log(action);
   switch (action.type) {
     case "dec":
-      return {...state, count: state.count - state.step};
+      return { ...state, count: state.count - state.step };
     case "inc":
-      return {...state, count: state.count + state.step};
+      return { ...state, count: state.count + state.step };
     case "setCount":
-      return {...state, count: action.payload};
+      return { ...state, count: action.payload };
     case "setStep":
-      return {...state, step: action.payload};
+      return { ...state, step: action.payload };
     case "reset":
       return initialState;
     default:
-      throw new Error('Unknown action!');
+      throw new Error("Unknown action!");
   }
- 
 }
 
 function DateCounter() {
-  
   const [state, dispatch] = useReducer(reducer, initialState);
   const { count, step } = state;
 
@@ -224,7 +223,7 @@ function DateCounter() {
   };
 
   const inc = function () {
-    dispatch({ type: "inc"});
+    dispatch({ type: "inc" });
   };
 
   const defineCount = function (e) {
@@ -232,11 +231,11 @@ function DateCounter() {
   };
 
   const defineStep = function (e) {
-    dispatch({  type: 'setStep', payload:  Number(e.target.value)})
+    dispatch({ type: "setStep", payload: Number(e.target.value) });
   };
 
   const reset = function () {
-    dispatch({ type: "reset"});
+    dispatch({ type: "reset" });
   };
 
   return (
@@ -267,7 +266,6 @@ function DateCounter() {
   );
 }
 export default DateCounter;
-
 ```
 
 ### How it works
@@ -289,20 +287,21 @@ Why useReducer:
 ### useState vs useReducer
 
 useState:
+
 - Single independent pieces of state
 - Simple
 - Should be the default go to
 
 useReducer:
+
 - Related or complex state
 - State updates need to happen together
 - Too many event handlers? Use useReducers
 - Little more complex (Easy once redux clicks)
 
-
 ## Routing & SPAs
 
-### Vite 
+### Vite
 
 Using vite as a build tool run `npm create vite` and you can select a start from different frameworks...pretty cool.
 
@@ -323,49 +322,48 @@ Then we need to configure our vite project with the `vite.config.js`. We import 
 
 ```js
 // vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
-import eslint from 'vite-plugin-eslint '
+import eslint from "vite-plugin-eslint ";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), eslint],
-})
-
+});
 ```
 
 Now eslint is running in our project
 
 ### Routes
+
 React needs 3rd party libraries to get additional functionality. Routing isn't built in. S owe add `npm i react-router-dom`. You know routing so its sorta self explanatory. But we import the browser router, routes and route. This is the traditional routing strategy. Then a route will get a path and an element to render when the url has that path. `*` will catch wildcard routes so we can render a 404.
 
 ```jsx
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   return (
     <BrowserRouter>
       <h1>Yeah buddy</h1>
       <Routes>
-        <Route path='/' element={<Home />}/>
-        <Route path='product' element={<Product />}/>
-        <Route path='pricing' element={<Pricing />}/>
-        <Route path='*' element={<PageNotFound />}/>
+        <Route path="/" element={<Home />} />
+        <Route path="product" element={<Product />} />
+        <Route path="pricing" element={<Pricing />} />
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
-
+export default App;
 ```
 
 ### CSS Modules
 
 These are baked into react and will scope styles to the component only. All you need to do is create a css file that follows the naming convention matching the component. Ex.) `Nav.module.css`. Then in the styles make sure you are not using element tags first as it will break out of the component scoping. Ex.) Don't use `ul {display: flex}` as it will apply to all ul's. Instead use `.list {display: flex}` or `.nav ul {display: flex}`.
 
-**UMD  Global & Other random errors**
+**UMD Global & Other random errors**
 
 After adding a `jsconfig.json` then removing it. I started getting typescript errors everywhere. I implemented a basic jsconfig.json as per VS Code docs after 2 1/2hrs of struggling to figure out what the fuck went wrong.
 
@@ -375,12 +373,11 @@ After adding a `jsconfig.json` then removing it. I started getting typescript er
   "compilerOptions": {
     "module": "commonjs",
     "target": "es6",
-    "jsx": "preserve",
+    "jsx": "preserve"
   },
   "exclude": ["node_modules", "**/node_modules/*"]
 }
 ```
-
 
 ### Nested Routes
 
@@ -388,28 +385,28 @@ Nested routes can be wrapped in a parent `Route` tag and will be relative to the
 
 Additionally we can specify the index attribute to make a component the default component to be shown. With nested routes provide the duplicate with the index attribute. In this instance when `localhost/app` is visited the cities component will be rendered by default. Note: The url WILL be `localhost/app` in that default instance not `localhost/app/cities`.
 
-
 ```jsx
 function App() {
   return (
-        <BrowserRouter>
-            <Routes>
-              <Route index element={<Homepage />} />
-              <Route path="product" element={<Product />} />
-              <Route path="pricing" element={<Pricing />} />
-              <Route path="login" element={<Login />} />
-              <Route path="app" element={<AppLayout />}>
-                <Route index element={<p>Cities</p>}></Route>
-                <Route path="cities" element={<p>Cities</p>}></Route>
-                <Route path="countries" element={<p>Countries</p>}></Route>
-                <Route path="form" element={<p>Form</p>}></Route>
-              </Route>
-              <Route path="*" element={<PageNotFound />} />
-            </Routes>
-        </BrowserRouter>
+    <BrowserRouter>
+      <Routes>
+        <Route index element={<Homepage />} />
+        <Route path="product" element={<Product />} />
+        <Route path="pricing" element={<Pricing />} />
+        <Route path="login" element={<Login />} />
+        <Route path="app" element={<AppLayout />}>
+          <Route index element={<p>Cities</p>}></Route>
+          <Route path="cities" element={<p>Cities</p>}></Route>
+          <Route path="countries" element={<p>Countries</p>}></Route>
+          <Route path="form" element={<p>Form</p>}></Route>
+        </Route>
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 ```
+
 ```jsx
 function AppLayout() {
   return (
@@ -419,16 +416,15 @@ function AppLayout() {
   );
 }
 ```
+
 ```jsx
 function Sidebar() {
   return (
     <div className={styles.sidebar}>
       <Logo />
       <AppNav />
-
-      // OUTLET HERE 
-      <Outlet/>
-
+      // OUTLET HERE
+      <Outlet />
       <footer className={styles.footer}>
         <p className={styles.copyright}>
           &copy; Copyright {new Date().getFullYear()} by WorldWise Inc.
@@ -441,5 +437,175 @@ function Sidebar() {
 
 Notice we can use the outlet a child further down the tree and it still works.
 
+### URL For State Management
 
-###
+The url is actually an easy global place to store simple forms of state like filters, ids, sorting order, open/closed panels etc.
+
+- It allows us to sidestep lifting state to a parent component
+- Allows state passing from one page to another
+- Can bookmark and share a "saved state" from a specific state/time
+
+This is done through params & query strings:
+
+Params:
+
+- Pass data between pages
+
+Query String:
+
+- Can store global data
+
+### Dynamic Routes
+
+We create a new route with a dynamic :id
+
+`<Route path="cities/:id" element={<City />}></Route>`
+
+Then we link to that route with the `to={}` being the param we want. (Keep in mind relative vs root relative urls)
+
+```jsx
+function CityItem({ city }) {
+  const { cityName, emoji, date, id } = city;
+  return (
+    <li>
+      <Link to={`${id}`} className={styles.cityItem}>
+        <span className={styles.cityEmoji}>{emoji}</span>
+        <h3 className={styles.name}>{cityName}</h3>
+        <time className={styles.date}>({formatDate(date)})</time>
+        <button className={styles.deleteBtn}>&times;</button>
+      </Link>
+    </li>
+  );
+}
+```
+
+Then in the component where we want to use the param, we use the useParam hook and destructure the variable we called it in the route.
+
+```jsx
+function City() {
+
+  const { id } = useParams();
+  console.log(id);
+
+  ...
+}
+```
+
+### Query Strings
+
+Same same, but different.
+
+In the component where we want to add query strings we add them with and initial `?` then each addditional prepended with an `&`.
+
+```jsx
+function CityItem({ city }) {
+  const { cityName, emoji, date, id, position } = city;
+  const { lat, lng } = position;
+  return (
+    <li>
+      <Link to={`${id}?lat=${lat}&lng=${lng}`} className={styles.cityItem}>
+        <span className={styles.cityEmoji}>{emoji}</span>
+        <h3 className={styles.name}>{cityName}</h3>
+        <time className={styles.date}>({formatDate(date)})</time>
+        <button className={styles.deleteBtn}>&times;</button>
+      </Link>
+    </li>
+  );
+}
+```
+
+Then we can use another hook called the `getMeMyFuckingQueryStrings` hook, and destructure as needed in any component that is currently rendered.
+
+Search params are accessed using `searchParams.get('paramName')` which is a convention in web dev
+
+The hook is very similar to `useState()` and also comes with an updater function to update the search params as needed, even adding new additional ones as shown below.
+
+```jsx
+function Map() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
+
+  return (
+    <div className={styles.mapContainer}>
+      <h1>Map</h1>
+      <h1>
+        Position: Lat {lat} | Lng {lng}
+      </h1>
+
+      <button
+        onClick={() => setSearchParams({ lat: 23, lng: 50, fuckyFuck: "Yes" })}
+      >
+        Change Position
+      </button>
+    </div>
+  );
+}
+```
+
+```jsx
+function City() {
+  const { id } = useParams();
+  console.log(id);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
+}
+```
+
+### Programmatic Navigation - useNavigate
+
+Useful when save has completed. Or just need to control navigation manually.
+
+We can navigate by url (Keep in mind relative and root relative)
+
+```jsx
+return (
+  <div className={styles.mapContainer} onClick={() => navigate("form")}>
+    <h1>Map</h1>
+    <h1>
+      Position: Lat {lat} | Lng {lng}
+    </h1>
+
+    <button
+      onClick={() => setSearchParams({ lat: 23, lng: 50, fuckyFuck: "Yes" })}
+    >
+      Change Position
+    </button>
+  </div>
+);
+```
+
+Or we can use it to go back. (I assume its based onthe browser history api)
+
+```jsx
+<Button
+  type="back"
+  onClick={(e) => {
+    e.preventDefault();
+    navigate(-1);
+  }}
+>
+  &larr; Back
+</Button>
+```
+
+### Navigate Component
+
+**Not used as much since there's hooks now**
+
+**BUT**
+_Still useful in nested routes as REDIRECTS_
+
+The Navigate component MUST have the REPLACE attribute if you want TO BE ABLE TO "GO BACK"
+
+```jsx
+<Route index element={<Navigate replace to="cities" />}></Route>
+<Route
+  path="cities"
+  element={<CityList cities={cities} isLoading={isLoading} />}
+></Route>
+```
