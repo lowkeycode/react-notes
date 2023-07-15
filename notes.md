@@ -609,3 +609,70 @@ The Navigate component MUST have the REPLACE attribute if you want TO BE ABLE TO
   element={<CityList cities={cities} isLoading={isLoading} />}
 ></Route>
 ```
+
+
+## Context API
+
+### Intro
+
+Context API
+
+- A solution to prop drilling
+- System to pass data throughout the application without needing to prop drill (GLOBAL STATE)
+
+Parts:
+
+1. Provider
+  - Special react component that gives children access to a value (commonly placed at the APP level)
+2. Value
+  - Value -> Data we want to make available (Usually state and functions)
+3. Consumers
+  - Components that read the provided context value
+   
+
+When the context value changes, ALL CONSUMERS who are SUBSCRIBED, RE-RENDER.
+
+### Basic Usage
+
+We create a context outside the component we want to provide to (Usually done in its own file and exported I think). The context is capitalized because it is considered a special type of component.
+
+```jsx
+const PostContext = createContext();
+```
+
+Then inside the component we want to provide values to all its children, we wrap the elements in the `Context.Provider` tag and pass any desired value to the value attribute
+
+```jsx
+return (
+    <PostContext.Provider
+      value={{
+        posts: searchedPosts,
+        onAddPost: handleAddPost,
+        onClearPosts: handleClearPosts,
+        searchQuery,
+        setSearchQuery,
+      }}
+    >
+      <section>
+        <button
+          onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
+          className="btn-fake-dark-mode"
+        >
+          {isFakeDark ? "☀️" : "🌙"}
+        </button>
+
+        <Header />
+        <Main />
+        <Archive />
+        <Footer />
+      </section>
+    </PostContext.Provider>
+  );
+```
+
+Then inside ANY child component we use the `useContext` hook to destructure and values from the context we desire
+
+```jsx
+const { searchQuery, setSearchQuery } = useContext(PostContext);
+```
+   
