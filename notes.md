@@ -676,3 +676,383 @@ Then inside ANY child component we use the `useContext` hook to destructure and 
 const { searchQuery, setSearchQuery } = useContext(PostContext);
 ```
    
+### Custom Context/Provider
+
+We create our context outside the provider named PostContext. Then the PostProvider is our component that we add all our state, derived state and handler functions to. Then we return the `PostContext.Provider` witth all our values passed in that we want child components to have access to. Then we wrap it around the children props and export both the component (provider) and context. 
+
+```jsx
+const { createContext, useState } = require("react");
+const { createRandomPost } = require("./App");
+
+const PostContext = createContext();
+
+function PostProvider({children}) {
+  const [posts, setPosts] = useState(() =>
+    Array.from({ length: 30 }, () => createRandomPost())
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Derived state. These are the posts that will actually be displayed
+  const searchedPosts =
+    searchQuery.length > 0
+      ? posts.filter((post) =>
+          `${post.title} ${post.body}`
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
+        )
+      : posts;
+
+  function handleAddPost(post) {
+    setPosts((posts) => [post, ...posts]);
+  }
+
+  function handleClearPosts() {
+    setPosts([]);
+  }
+
+  return (
+    <PostContext.Provider
+      value={{
+        posts: searchedPosts,
+        onAddPost: handleAddPost,
+        onClearPosts: handleClearPosts,
+        searchQuery,
+        setSearchQuery,
+      }}
+    >
+      {children}
+    </PostContext.Provider>
+  )
+}
+
+export { PostContext, PostProvider };
+
+```
+
+Then to use it we just wrap any children we want to have access to the values in the component (provider) tag. And in the child components we still use the useContext hook the reference the context and destructure our values.
+
+```jsx
+return (
+    <section>
+      <button
+        onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
+        className="btn-fake-dark-mode"
+      >
+        {isFakeDark ? "☀️" : "🌙"}
+      </button>
+
+      <PostProvider>
+        <Header />
+        <Main />
+        <Archive />
+      </PostProvider>
+      <Footer />
+    </section>
+  );
+```
+
+
+```jsx
+function Header() {
+  const { onClearPosts } = useContext(PostContext);
+
+  return (
+    <header>
+      <h1>
+        <span>⚛️</span>The Atomic Blog
+      </h1>
+      <div>
+        <Results />
+        <SearchPosts />
+        <button onClick={onClearPosts}>Clear posts</button>
+      </div>
+    </header>
+  );
+}
+```
+
+A common practice is to export a custom hook in the same file as the context that returns the context to write a little less code.
+
+We also add a check, so if any dev tries to use the context "Outside the provider" (Not in the children of the provider) we can throw an error for them and let them know. Ex.) Trying to destructure the post context at the app level
+
+```jsx
+// PostContext.js
+function usePosts() {
+  const context = useContext(PostContext);
+  if(context === undefined) throw new Error('PostContext was used outside of the PostProvider');
+  return context;
+}
+
+export { PostProvider, usePosts };
+```
+
+```jsx
+const { onClearPosts } = usePosts();
+```
+
+
+### State MGMT With Context API
+
+#### Types of state
+1. State Accessibility 
+Local State:
+- Only needed by one or a few components
+- Only accessible in component and children
+
+Global State: 
+- Needed by many components
+- Accessible by every component in the app
+
+
+2. StateDomain
+Remote State:
+- Loaded from a remote server(API)
+- Asynchronous
+- Needs re-fetching, caching, updating
+
+UI State:
+- Everything else
+- Theme, list filters, form data etc.
+- Synchronous
+- Stored in the app
+
+#### Placement
+
+Local Component
+- useState, useReducer, useRef
+- Local State
+
+Parent Component
+- useState, useReducer, useRef
+- Lifting up state
+
+Context
+- Context API + useState or useReducer
+- Global State (preferably UI state)
+
+3rd Party
+- Redux, React Query, SWR, Zustand
+- Global State (Remote or UI)
+
+URL
+- React Router
+- Global State, passing between pages
+
+Browser
+- Local Storage, Session Storage etc.
+- Storing data in users browser
+
+#### Tool Options
+
+Local/UI State
+- useState, useReducer, useRef
+
+Local/Remote State
+- fetch + useEffect + useState/useReducer
+- Good for small apps
+
+Global/Ui State
+- Context API + useState/useReducer
+- Redux, Zustand, Recoil etc.
+- React Router
+
+Global/Remote State
+- Context API + useState/useReducer
+- Redux, Zustand, Recoil etc.
+- React Router
+- React Query, SWR, RTK Query (All highly specialized tools)
+
+
+### Advanced State MGMT (Context API/useReducer)
+
+A common pattern for complex global state is to use the use
+Reducer hook alongside the context api. 
+
+```jsx
+import { createContext, useContext, useEffect, useReducer } from "react";
+
+const CitiesContext = createContext();
+
+const BASE_URL = "http://localhost:8000";
+
+const initialState = {
+  cities: [],
+  isLoading: false,
+  currentCity: {},
+  cityContextError: "",
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "LOADING":
+      return { ...state, isLoading: action.payload };
+    case "CITIES_LOADED":
+      return { ...state, cities: [...action.payload], isLoading: false };
+    case "CURRENT_CITY_LOADED":
+      return { ...state, currentCity: action.payload, isLoading: false };
+    case "CREATE_CITY":
+      return {
+        ...state,
+        cities: [...state.cities, action.payload],
+        isLoading: false,
+        currentCity: action.payload
+      };
+    case "DELETE_CITY":
+      return {
+        ...state,
+        cities: state.cities.filter((city) => city.id !== action.payload),
+        isLoading: false,
+        currentCity: {}
+      };
+    case "ERROR":
+      return { ...state, error: action.payload, isLoading: false };
+  }
+}
+
+function CitiesProvider({ children }) {
+  const [{ cities, isLoading, currentCity, cityContextError }, dispatch] =
+    useReducer(reducer, initialState);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        dispatch({ type: "LOADING", payload: true });
+        const res = await fetch(`${BASE_URL}/cities`);
+        const data = await res.json();
+        dispatch({ type: "CITIES_LOADED", payload: data });
+      } catch (error) {
+        console.log(`There was an error! ${error.message}`);
+        dispatch({ type: "ERROR", payload: error.message });
+      }
+    };
+    fetchCities();
+  }, []);
+
+  async function getCity(id) {
+    if(Number(id) === currentCity.id) return;
+    try {
+      dispatch({ type: "LOADING", payload: true });
+      const res = await fetch(`${BASE_URL}/cities/${id}`);
+      const data = await res.json();
+      dispatch({ type: "CURRENT_CITY_LOADED", payload: data });
+    } catch (error) {
+      console.log(`There was an error getting the city! ${error.message}`);
+      dispatch({ type: "ERROR", payload: error.message });
+    }
+  }
+
+  async function createCity(newCity) {
+    try {
+      dispatch({ type: "LOADING", payload: true });
+      const res = await fetch(`${BASE_URL}/cities`, {
+        method: "POST",
+        body: JSON.stringify(newCity),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      dispatch({ type: "CREATE_CITY", payload: data });
+    } catch (error) {
+      console.log(`There was an error creating the city! ${error.message}`);
+      dispatch({ type: "ERROR", payload: error.message });
+    }
+  }
+
+  async function deleteCity(id) {
+    try {
+      dispatch({ type: "LOADING", payload: true });
+      await fetch(`${BASE_URL}/cities/${id}`, { method: "Delete" });
+      dispatch({ type: "DELETE_CITY", payload: id });
+    } catch (error) {
+      console.log(`There was an error deleting the city! ${error.message}`);
+      dispatch({ type: "ERROR", payload: error.message });
+    }
+  }
+
+  return (
+    <CitiesContext.Provider
+      value={{
+        cities,
+        isLoading,
+        currentCity,
+        getCity,
+        createCity,
+        deleteCity,
+        cityContextError
+      }}
+    >
+      {children}
+    </CitiesContext.Provider>
+  );
+}
+
+function useCities() {
+  const context = useContext(CitiesContext);
+  if (context === undefined)
+    throw new Error("CitiesContext used outside of CitiesProvider.");
+  if (context.error) throw new Error(context.error);
+  return context;
+}
+
+export { CitiesProvider, useCities };
+
+```
+
+### Protected Routes
+
+To protect routes we can access a global auth context to determine if the user is logged in and if not then redirect them back to home.
+
+```jsx
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useEffect } from "react";
+
+function ProtectedRoute({children}) {
+  const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if(!isSignedIn) navigate('/')
+  }, [isSignedIn, navigate]);
+
+  return isSignedIn ? children : null;
+}
+
+export default ProtectedRoute
+
+```
+
+
+We wrap the components we want to protect in the protected route component and check the auth state. If the user is authenticated then we can render its children.
+```jsx
+// App.jsx
+
+return (
+    <AuthProvider>
+      <CitiesProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route index element={<Homepage />} />
+            <Route path="product" element={<Product />} />
+            <Route path="pricing" element={<Pricing />} />
+            <Route path="login" element={<Login />} />
+            <Route
+              path="app"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate replace to="cities" />}></Route>
+              <Route path="cities" element={<CityList />}></Route>
+              <Route path="cities/:id" element={<City />}></Route>
+              <Route path="countries" element={<CountryList />}></Route>
+              <Route path="form" element={<Form />}></Route>
+            </Route>
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </CitiesProvider>
+    </AuthProvider>
+  );
+```
