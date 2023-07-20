@@ -1056,3 +1056,121 @@ return (
     </AuthProvider>
   );
 ```
+
+## Performance Optimizations/Advanced useEffect
+
+### Basics
+
+Perf Op Tools:
+
+1. Prevent wasted renders
+  - memo
+  - useMemo
+  - useCallback
+  - Passing elements as children or as props
+2. Improve App Speed/Responsiveness
+  - use Memo
+  - useCallback
+  - useTransition
+3. Reduce Bundle Size
+  - Use fewer 3rd party packages
+  - Code splitting/Lazy loading
+
+Rerenders happen in 3 instances:
+1. State changes
+2. Context changes that a component is subscribed to
+  - Important to note that if ANYTHING changes in the context the subscribed component rerenders. Ex.) The component is only subscribed to the context for a function, but another component causes a state update in the context, the component subscribed for just some function usage rerenders too.
+3. Parent rerenders
+  - Parents rerenders give the common misconception that changing props rerenders a component. This is untrue. Props only change when the parent rerenders which in turn causes all children to rerender anyway.  
+
+Remember:
+Render does not mean that the DOM rerenders, it means that React is creating a new VDOM and running its diffing and reconcilliation phases with the component functions being called. But this can be expensive.
+
+Wasted render: 
+A render where the diffing/reconcile phases ran but now changes were made.
+> Only a problem when they happen too much or the component is very slow
+
+### Components As Props
+
+We can use component composition to access a component as children or pass an element as a defined prop to render in a component. If this component is very slow to render and the parent changes, we can do this to prevent rerenders of this slow child component. This is because React is smart enough to know that when the state changes in the parent, but the slow child doesn't depend on that state that the child already exists and should not rerender.
+
+
+Here we see that every increase to count will rerender a list of 100,000 elements, causing substantial lagginess.
+```jsx
+import { useState } from "react";
+
+function SlowComponent() {
+  // If this is too slow on your maching, reduce the `length`
+  const words = Array.from({ length: 100_000 }, () => "WORD");
+  return (
+    <ul>
+      {words.map((word, i) => (
+        <li key={i}>
+          {i}: {word}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default function Test() {
+  const [count, setCount] = useState(0);
+  return (
+    <div>
+      <h1>Slow counter?!?</h1>
+      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button>
+      <SlowComponent />
+    </div>
+  );
+}
+
+```
+
+When we refactor to pass the slow component using composition and it doesnt depend on its parents state, then React prevents rerenders of the slow component and the updates to state are instant and smooth.
+
+```jsx
+import { useState } from "react";
+
+function SlowComponent() {
+  // If this is too slow on your maching, reduce the `length`
+  const words = Array.from({ length: 100_000 }, () => "WORD");
+  return (
+    <ul>
+      {words.map((word, i) => (
+        <li key={i}>
+          {i}: {word}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Counter({children}) {
+  const [count, setCount] = useState(0);
+  return (
+    <div>
+      <h1>Slow counter?!?</h1>
+      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button>
+      {children}
+    </div>
+  )
+}
+
+export default function Test() {
+  // const [count, setCount] = useState(0);
+  return (
+    <div>
+      {/* <h1>Slow counter?!?</h1>
+      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button> */}
+      <Counter>
+       <SlowComponent />
+      </Counter>
+    </div>
+  );
+}
+
+```
+
+
+
+ 
