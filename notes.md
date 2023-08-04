@@ -1108,13 +1108,13 @@ Remember:
 Render does not mean that the DOM rerenders, it means that React is creating a new VDOM and running its diffing and reconcilliation phases with the component functions being called. But this can be expensive.
 
 Wasted render:
-A render where the diffing/reconcile phases ran but now changes were made.
+A render where the diffing/reconcile phases ran but no changes were made.
 
 > Only a problem when they happen too much or the component is very slow
 
 ### Components As Props
 
-We can use component composition to access a component as children or pass an element as a defined prop to render in a component. If this component is very slow to render and the parent changes, we can do this to prevent rerenders of this slow child component. This is because React is smart enough to know that when the state changes in the parent, but the slow child doesn't depend on that state that the child already exists and should not rerender.
+We can use component composition to access a component as children or pass an element as a defined prop to render in a component. If this component is very slow to render and the parent changes, we can do this to prevent rerenders of this slow child component. This is because React is smart enough to know that when the state changes in the parent, but the slow child DOESNT DEPEND ON PARENT STATE that the child already exists and should not rerender. (This is because components are functions and if the input doesn't change it wont rerender the inputs)
 
 Here we see that every increase to count will rerender a list of 100,000 elements, causing substantial lagginess.
 
@@ -1122,7 +1122,6 @@ Here we see that every increase to count will rerender a list of 100,000 element
 import { useState } from "react";
 
 function SlowComponent() {
-  // If this is too slow on your maching, reduce the `length`
   const words = Array.from({ length: 100_000 }, () => "WORD");
   return (
     <ul>
@@ -1233,10 +1232,29 @@ These:
 
 #### Memo
 
-- Used to createa component that WILL NOT RERENDER WHEN ITS PARENT RERENDERS as long as the PROPS HAVE STAYED THE SAME
-- ONLY AFFECTS PROPS. Will still rerender if its own state changes, or when a context it is sdubscribed to changes
+- Used to create a component that WILL NOT RERENDER WHEN ITS PARENT RERENDERS as long as the PROPS HAVE STAYED THE SAME
+- ONLY AFFECTS PROPS. Will still rerender if its own state changes, or when a context it is subscribed to changes
 - Only use with a **heavy** component or one that rerenders often and in either case props stay the same
 
+We can simplify `memo` by wrapping the default export of a component instead of redeclaring a variable.
+
+```jsx
+import { memo } from "react";
+
+function ToggleSounds({ allowSound, setAllowSound }) {
+  return (
+    <button
+      className="btn-sound"
+      onClick={() => setAllowSound((allow) => !allow)}
+    >
+      {allowSound ? "🔈" : "🔇"}
+    </button>
+  );
+}
+
+export default memo(ToggleSounds);
+
+```
 
 #### useMemo & useCallback
 
