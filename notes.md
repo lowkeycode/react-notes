@@ -308,8 +308,8 @@ Using vite as a build tool run `npm create vite` and you can select a start from
 We used create-react-app prior to this as it comes setup with eslint and many other things and iw fine for learning. Vite however is the reommended build tool from the react team.
 
 To setup eslint we run `npm i eslint vite-plugin-eslint eslint-config-react-app --save-dev`
-
 Then we needs to create an `eslintrc.json` to extends the default rules of eslint with the react rules we just installed
+
 
 ```json
 // eslintrc.json
@@ -610,7 +610,6 @@ The Navigate component MUST have the REPLACE attribute if you want TO BE ABLE TO
 ></Route>
 ```
 
-
 ## Context API
 
 ### Intro
@@ -623,12 +622,16 @@ Context API
 Parts:
 
 1. Provider
-  - Special react component that gives children access to a value (commonly placed at the APP level)
+
+- Special react component that gives children access to a value (commonly placed at the APP level)
+
 2. Value
-  - Value -> Data we want to make available (Usually state and functions)
+
+- Value -> Data we want to make available (Usually state and functions)
+
 3. Consumers
-  - Components that read the provided context value
-   
+
+- Components that read the provided context value
 
 When the context value changes, ALL CONSUMERS who are SUBSCRIBED, RE-RENDER.
 
@@ -644,30 +647,30 @@ Then inside the component we want to provide values to all its children, we wrap
 
 ```jsx
 return (
-    <PostContext.Provider
-      value={{
-        posts: searchedPosts,
-        onAddPost: handleAddPost,
-        onClearPosts: handleClearPosts,
-        searchQuery,
-        setSearchQuery,
-      }}
-    >
-      <section>
-        <button
-          onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
-          className="btn-fake-dark-mode"
-        >
-          {isFakeDark ? "☀️" : "🌙"}
-        </button>
+  <PostContext.Provider
+    value={{
+      posts: searchedPosts,
+      onAddPost: handleAddPost,
+      onClearPosts: handleClearPosts,
+      searchQuery,
+      setSearchQuery,
+    }}
+  >
+    <section>
+      <button
+        onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
+        className="btn-fake-dark-mode"
+      >
+        {isFakeDark ? "☀️" : "🌙"}
+      </button>
 
-        <Header />
-        <Main />
-        <Archive />
-        <Footer />
-      </section>
-    </PostContext.Provider>
-  );
+      <Header />
+      <Main />
+      <Archive />
+      <Footer />
+    </section>
+  </PostContext.Provider>
+);
 ```
 
 Then inside ANY child component we use the `useContext` hook to destructure and values from the context we desire
@@ -675,10 +678,10 @@ Then inside ANY child component we use the `useContext` hook to destructure and 
 ```jsx
 const { searchQuery, setSearchQuery } = useContext(PostContext);
 ```
-   
+
 ### Custom Context/Provider
 
-We create our context outside the provider named PostContext. Then the PostProvider is our component that we add all our state, derived state and handler functions to. Then we return the `PostContext.Provider` witth all our values passed in that we want child components to have access to. Then we wrap it around the children props and export both the component (provider) and context. 
+We create our context outside the provider named PostContext. Then the PostProvider is our component that we add all our state, derived state and handler functions to. Then we return the `PostContext.Provider` witth all our values passed in that we want child components to have access to. Then we wrap it around the children props and export both the component (provider) and context.
 
 ```jsx
 const { createContext, useState } = require("react");
@@ -686,7 +689,7 @@ const { createRandomPost } = require("./App");
 
 const PostContext = createContext();
 
-function PostProvider({children}) {
+function PostProvider({ children }) {
   const [posts, setPosts] = useState(() =>
     Array.from({ length: 30 }, () => createRandomPost())
   );
@@ -722,35 +725,33 @@ function PostProvider({children}) {
     >
       {children}
     </PostContext.Provider>
-  )
+  );
 }
 
 export { PostContext, PostProvider };
-
 ```
 
 Then to use it we just wrap any children we want to have access to the values in the component (provider) tag. And in the child components we still use the useContext hook the reference the context and destructure our values.
 
 ```jsx
 return (
-    <section>
-      <button
-        onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
-        className="btn-fake-dark-mode"
-      >
-        {isFakeDark ? "☀️" : "🌙"}
-      </button>
+  <section>
+    <button
+      onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
+      className="btn-fake-dark-mode"
+    >
+      {isFakeDark ? "☀️" : "🌙"}
+    </button>
 
-      <PostProvider>
-        <Header />
-        <Main />
-        <Archive />
-      </PostProvider>
-      <Footer />
-    </section>
-  );
+    <PostProvider>
+      <Header />
+      <Main />
+      <Archive />
+    </PostProvider>
+    <Footer />
+  </section>
+);
 ```
-
 
 ```jsx
 function Header() {
@@ -779,7 +780,8 @@ We also add a check, so if any dev tries to use the context "Outside the provide
 // PostContext.js
 function usePosts() {
   const context = useContext(PostContext);
-  if(context === undefined) throw new Error('PostContext was used outside of the PostProvider');
+  if (context === undefined)
+    throw new Error("PostContext was used outside of the PostProvider");
   return context;
 }
 
@@ -790,27 +792,30 @@ export { PostProvider, usePosts };
 const { onClearPosts } = usePosts();
 ```
 
-
 ### State MGMT With Context API
 
 #### Types of state
-1. State Accessibility 
-Local State:
+
+1. State Accessibility
+   Local State:
+
 - Only needed by one or a few components
 - Only accessible in component and children
 
-Global State: 
+Global State:
+
 - Needed by many components
 - Accessible by every component in the app
 
-
 2. StateDomain
-Remote State:
+   Remote State:
+
 - Loaded from a remote server(API)
 - Asynchronous
 - Needs re-fetching, caching, updating
 
 UI State:
+
 - Everything else
 - Theme, list filters, form data etc.
 - Synchronous
@@ -819,54 +824,63 @@ UI State:
 #### Placement
 
 Local Component
+
 - useState, useReducer, useRef
 - Local State
 
 Parent Component
+
 - useState, useReducer, useRef
 - Lifting up state
 
 Context
+
 - Context API + useState or useReducer
 - Global State (preferably UI state)
 
 3rd Party
+
 - Redux, React Query, SWR, Zustand
 - Global State (Remote or UI)
 
 URL
+
 - React Router
 - Global State, passing between pages
 
 Browser
+
 - Local Storage, Session Storage etc.
 - Storing data in users browser
 
 #### Tool Options
 
 Local/UI State
+
 - useState, useReducer, useRef
 
 Local/Remote State
+
 - fetch + useEffect + useState/useReducer
 - Good for small apps
 
 Global/Ui State
+
 - Context API + useState/useReducer
 - Redux, Zustand, Recoil etc.
 - React Router
 
 Global/Remote State
+
 - Context API + useState/useReducer
 - Redux, Zustand, Recoil etc.
 - React Router
 - React Query, SWR, RTK Query (All highly specialized tools)
 
-
 ### Advanced State MGMT (Context API/useReducer)
 
 A common pattern for complex global state is to use the use
-Reducer hook alongside the context api. 
+Reducer hook alongside the context api.
 
 ```jsx
 import { createContext, useContext, useEffect, useReducer } from "react";
@@ -895,14 +909,14 @@ function reducer(state, action) {
         ...state,
         cities: [...state.cities, action.payload],
         isLoading: false,
-        currentCity: action.payload
+        currentCity: action.payload,
       };
     case "DELETE_CITY":
       return {
         ...state,
         cities: state.cities.filter((city) => city.id !== action.payload),
         isLoading: false,
-        currentCity: {}
+        currentCity: {},
       };
     case "ERROR":
       return { ...state, error: action.payload, isLoading: false };
@@ -929,7 +943,7 @@ function CitiesProvider({ children }) {
   }, []);
 
   async function getCity(id) {
-    if(Number(id) === currentCity.id) return;
+    if (Number(id) === currentCity.id) return;
     try {
       dispatch({ type: "LOADING", payload: true });
       const res = await fetch(`${BASE_URL}/cities/${id}`);
@@ -977,7 +991,7 @@ function CitiesProvider({ children }) {
         getCity,
         createCity,
         deleteCity,
-        cityContextError
+        cityContextError,
       }}
     >
       {children}
@@ -994,7 +1008,6 @@ function useCities() {
 }
 
 export { CitiesProvider, useCities };
-
 ```
 
 ### Protected Routes
@@ -1006,27 +1019,248 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useEffect } from "react";
 
-function ProtectedRoute({children}) {
+function ProtectedRoute({ children }) {
   const { isSignedIn } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if(!isSignedIn) navigate('/')
+    if (!isSignedIn) navigate("/");
   }, [isSignedIn, navigate]);
 
   return isSignedIn ? children : null;
 }
 
-export default ProtectedRoute
-
+export default ProtectedRoute;
 ```
 
-
 We wrap the components we want to protect in the protected route component and check the auth state. If the user is authenticated then we can render its children.
+
 ```jsx
 // App.jsx
 
 return (
+  <AuthProvider>
+    <CitiesProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route index element={<Homepage />} />
+          <Route path="product" element={<Product />} />
+          <Route path="pricing" element={<Pricing />} />
+          <Route path="login" element={<Login />} />
+          <Route
+            path="app"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate replace to="cities" />}></Route>
+            <Route path="cities" element={<CityList />}></Route>
+            <Route path="cities/:id" element={<City />}></Route>
+            <Route path="countries" element={<CountryList />}></Route>
+            <Route path="form" element={<Form />}></Route>
+          </Route>
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </CitiesProvider>
+  </AuthProvider>
+);
+```
+
+## Performance Optimizations/Advanced useEffect
+
+### Basics
+
+Perf Op Tools:
+
+1. Prevent wasted renders
+
+- memo
+- useMemo
+- useCallback
+- Passing elements as children or as props
+
+2. Improve App Speed/Responsiveness
+
+- use Memo
+- useCallback
+- useTransition
+
+3. Reduce Bundle Size
+
+- Use fewer 3rd party packages
+- Code splitting/Lazy loading
+
+Rerenders happen in 3 instances:
+
+1. State changes
+2. Context changes that a component is subscribed to
+
+- Important to note that if ANYTHING changes in the context the subscribed component rerenders. Ex.) The component is only subscribed to the context for a function, but another component causes a state update in the context, the component subscribed for just some function usage rerenders too.
+
+3. Parent rerenders
+
+- Parents rerenders give the common misconception that changing props rerenders a component. This is untrue. Props only change when the parent rerenders which in turn causes all children to rerender anyway.
+
+Remember:
+Render does not mean that the DOM rerenders, it means that React is creating a new VDOM and running its diffing and reconcilliation phases with the component functions being called. But this can be expensive.
+
+Wasted render:
+A render where the diffing/reconcile phases ran but now changes were made.
+
+> Only a problem when they happen too much or the component is very slow
+
+### Components As Props
+
+We can use component composition to access a component as children or pass an element as a defined prop to render in a component. If this component is very slow to render and the parent changes, we can do this to prevent rerenders of this slow child component. This is because React is smart enough to know that when the state changes in the parent, but the slow child doesn't depend on that state that the child already exists and should not rerender.
+
+Here we see that every increase to count will rerender a list of 100,000 elements, causing substantial lagginess.
+
+```jsx
+import { useState } from "react";
+
+function SlowComponent() {
+  // If this is too slow on your maching, reduce the `length`
+  const words = Array.from({ length: 100_000 }, () => "WORD");
+  return (
+    <ul>
+      {words.map((word, i) => (
+        <li key={i}>
+          {i}: {word}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default function Test() {
+  const [count, setCount] = useState(0);
+  return (
+    <div>
+      <h1>Slow counter?!?</h1>
+      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button>
+      <SlowComponent />
+    </div>
+  );
+}
+```
+
+When we refactor to pass the slow component using composition and it doesnt depend on its parents state, then React prevents rerenders of the slow component and the updates to state are instant and smooth.
+
+```jsx
+import { useState } from "react";
+
+function SlowComponent() {
+  // If this is too slow on your maching, reduce the `length`
+  const words = Array.from({ length: 100_000 }, () => "WORD");
+  return (
+    <ul>
+      {words.map((word, i) => (
+        <li key={i}>
+          {i}: {word}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Counter({ children }) {
+  const [count, setCount] = useState(0);
+  return (
+    <div>
+      <h1>Slow counter?!?</h1>
+      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button>
+      {children}
+    </div>
+  );
+}
+
+export default function Test() {
+  // const [count, setCount] = useState(0);
+  return (
+    <div>
+      {/* <h1>Slow counter?!?</h1>
+      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button> */}
+      <Counter>
+        <SlowComponent />
+      </Counter>
+    </div>
+  );
+}
+```
+
+We can see this effect in the profiler with providers as well. Even though the providers are parent components when state changes happen only children who are subscribed to the context are rerendered.
+
+```jsx
+function PostProvider({children}) {
+
+  ...etc
+
+  return (
+    <PostContext.Provider
+      value={{
+        posts: searchedPosts,
+        onAddPost: handleAddPost,
+        onClearPosts: handleClearPosts,
+        searchQuery,
+        setSearchQuery,
+      }}
+    >
+      {children}
+    </PostContext.Provider>
+  )
+}
+```
+
+
+### Memoization
+
+Memoization:
+  - An optimization technique that executes a pure function once, then stores the results in memory. If the function is called again with the exact same inputs then the cached value is used and the function is not executed again. Otherwise if the inputs change, then it will execute again.
+
+In React we can a few memoization techniques
+
+1. Component memoization with `memo`
+2. Object memoization with `useMemo`
+3. Function memoization with `useCallback`
+
+These:
+1. Prevent wasted renders
+2. Improve app speed/responsiveness
+
+
+#### Memo
+
+- Used to createa component that WILL NOT RERENDER WHEN ITS PARENT RERENDERS as long as the PROPS HAVE STAYED THE SAME
+- ONLY AFFECTS PROPS. Will still rerender if its own state changes, or when a context it is sdubscribed to changes
+- Only use with a **heavy** component or one that rerenders often and in either case props stay the same
+
+
+#### useMemo & useCallback
+
+If we have an object or function created inside a component and that component rerenders, even if the object/function looks exactly the same it is actually a brand new one. 
+
+- useMemo is used to cache values (Objects)
+- useCallback is used to cache functions
+- Cached values/functions will be returned as long as dependencies (in the dependency array) stay the same, otherwise the value will be recreated
+ 
+3 main use cases:
+1. Memoizing props to prevent wasted rerenders
+2. Memoize values to prevent expensive recalculations
+3. Memoizing values that are use in the dependency array of another hook
+
+
+useCallback Example:
+
+In the app when the `city:id` route is rendered from clicking on a city in the city list the id is updated in the url and the city component mounts. When the id changes the useEffect dependent on that id will run and call `getCity(id)`. We can see in the context that getCity updates the state, causing a rerender of the provider, which will cause a rerender of the city component, which will call `getCity` AGAIN resulting in another state update and an infinite loop.
+
+the solver as shown below is to use `useCallback` to memoize the function to prevent the value from being recalculated if the input has not changed, solving our problem and preventing the infinite loop.
+```jsx
+// App.jsx
+function App() {
+  return (
     <AuthProvider>
       <CitiesProvider>
         <BrowserRouter>
@@ -1055,122 +1289,201 @@ return (
       </CitiesProvider>
     </AuthProvider>
   );
+}
 ```
 
-## Performance Optimizations/Advanced useEffect
-
-### Basics
-
-Perf Op Tools:
-
-1. Prevent wasted renders
-  - memo
-  - useMemo
-  - useCallback
-  - Passing elements as children or as props
-2. Improve App Speed/Responsiveness
-  - use Memo
-  - useCallback
-  - useTransition
-3. Reduce Bundle Size
-  - Use fewer 3rd party packages
-  - Code splitting/Lazy loading
-
-Rerenders happen in 3 instances:
-1. State changes
-2. Context changes that a component is subscribed to
-  - Important to note that if ANYTHING changes in the context the subscribed component rerenders. Ex.) The component is only subscribed to the context for a function, but another component causes a state update in the context, the component subscribed for just some function usage rerenders too.
-3. Parent rerenders
-  - Parents rerenders give the common misconception that changing props rerenders a component. This is untrue. Props only change when the parent rerenders which in turn causes all children to rerender anyway.  
-
-Remember:
-Render does not mean that the DOM rerenders, it means that React is creating a new VDOM and running its diffing and reconcilliation phases with the component functions being called. But this can be expensive.
-
-Wasted render: 
-A render where the diffing/reconcile phases ran but now changes were made.
-> Only a problem when they happen too much or the component is very slow
-
-### Components As Props
-
-We can use component composition to access a component as children or pass an element as a defined prop to render in a component. If this component is very slow to render and the parent changes, we can do this to prevent rerenders of this slow child component. This is because React is smart enough to know that when the state changes in the parent, but the slow child doesn't depend on that state that the child already exists and should not rerender.
-
-
-Here we see that every increase to count will rerender a list of 100,000 elements, causing substantial lagginess.
 ```jsx
-import { useState } from "react";
-
-function SlowComponent() {
-  // If this is too slow on your maching, reduce the `length`
-  const words = Array.from({ length: 100_000 }, () => "WORD");
-  return (
-    <ul>
-      {words.map((word, i) => (
-        <li key={i}>
-          {i}: {word}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export default function Test() {
-  const [count, setCount] = useState(0);
-  return (
-    <div>
-      <h1>Slow counter?!?</h1>
-      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button>
-      <SlowComponent />
-    </div>
-  );
-}
-
+// CitiesContext.jsx
+const getCity = useCallback(async function getCity(id) {
+    if(Number(id) === currentCity.id) return;
+    try {
+      dispatch({ type: "LOADING", payload: true });
+      const res = await fetch(`${BASE_URL}/cities/${id}`);
+      const data = await res.json();
+      dispatch({ type: "CURRENT_CITY_LOADED", payload: data });
+    } catch (error) {
+      console.log(`There was an error getting the city! ${error.message}`);
+      dispatch({ type: "ERROR", payload: error.message });
+    }
+  }, [currentCity.id])
 ```
 
-When we refactor to pass the slow component using composition and it doesnt depend on its parents state, then React prevents rerenders of the slow component and the updates to state are instant and smooth.
 
 ```jsx
-import { useState } from "react";
+// City.jsx
+function City() {
 
-function SlowComponent() {
-  // If this is too slow on your maching, reduce the `length`
-  const words = Array.from({ length: 100_000 }, () => "WORD");
-  return (
-    <ul>
-      {words.map((word, i) => (
-        <li key={i}>
-          {i}: {word}
-        </li>
-      ))}
-    </ul>
-  );
-}
+  const { id } = useParams();
+  const {getCity, currentCity, isLoading} = useCities();
 
-function Counter({children}) {
-  const [count, setCount] = useState(0);
+  useEffect(() => {
+    getCity(id)
+  }, [id, getCity])
+
+  const { cityName, emoji, date, notes } = currentCity;
+
+  if(isLoading) return <Spinner/ >
+
+  
   return (
-    <div>
-      <h1>Slow counter?!?</h1>
-      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button>
-      {children}
-    </div>
+    etc...
   )
-}
+```
 
-export default function Test() {
-  // const [count, setCount] = useState(0);
+### Code Splitting (Optimizing Bundle Size) - Suspense Intro
+
+Bundle: 
+- JS file containing the entire apps code. Downloading it will load the entire app at once. This gives us an SPA
+
+Bundle Size: 
+- Amount of JS the user needs to download
+
+Code Splitting: 
+- Splitting the bundle into multiple smaller parts so it can be downloaded over tim as parts are needed "lazy loading"
+
+A common practice is to split apps at the page level, but can ALSO be done with COMPONENTS.
+
+To lazy load/code split pages/components we store the result of xalling the react `lazy` function which takes a callback that return the JS dynamic `import` function with the path to the page/component. Then vite automatically takes care of the code splitting for us. We wrap the Routes in the react `Suspense` component giving it a fallback prop which is the desired fallback component (in this case a spinner). Then we can see the differences in bundle sizes (commented out) from one big chunks to a bunch of smaller ones. Additionally after the initial slower load of a page, when the use navigate back the chunk is already loaded and very fast.
+
+```jsx
+// App.jsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
+
+// import Homepage from "./pages/Homepage";
+// import Product from "./pages/Product";
+// import Pricing from "./pages/Pricing";
+// import Login from "./pages/Login";
+// import AppLayout from "./pages/AppLayout";
+// import PageNotFound from "./pages/PageNotFound";
+
+// dist/assets/index-35c0d3a4.css   30.30 kB │ gzip:   5.06 kB
+// dist/assets/index-b39bb755.js   524.79 kB │
+
+const Homepage = lazy(() => import("./pages/Homepage"));
+const Product = lazy(() => import("./pages/Product"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Login = lazy(() => import("./pages/Login"));
+const AppLayout = lazy(() => import("./pages/AppLayout"));
+const PageNotFound = lazy(() => import("./pages/PageNotFound"));
+
+// dist/assets/Logo-515b84ce.css             0.03 kB │ gzip:   0.05 kB
+// dist/assets/Product-cf1be470.css          0.47 kB │ gzip:   0.27 kB
+// dist/assets/Homepage-b9276e6f.css         0.51 kB │ gzip:   0.30 kB
+// dist/assets/PageNav-d3c5d403.css          0.51 kB │ gzip:   0.28 kB
+// dist/assets/Login-c4b57744.css            0.57 kB │ gzip:   0.30 kB
+// dist/assets/AppLayout-43ea7ec8.css        1.91 kB │ gzip:   0.70 kB
+// dist/assets/index-300e441a.css           26.42 kB │ gzip:   4.33 kB
+// dist/assets/Product.module-02d70b80.js    0.06 kB │ gzip:   0.07 kB
+// dist/assets/Logo-f77965b9.js              0.21 kB │ gzip:   0.19 kB
+// dist/assets/PageNotFound-ca165fda.js      0.23 kB │ gzip:   0.20 kB
+// dist/assets/PageNav-1aded4e1.js           0.49 kB │ gzip:   0.27 kB
+// dist/assets/Pricing-fd88bf0a.js           0.64 kB │ gzip:   0.41 kB
+// dist/assets/Homepage-d05efb60.js          0.67 kB │ gzip:   0.41 kB
+// dist/assets/Product-2430de33.js           0.85 kB │ gzip:   0.48 kB
+// dist/assets/Login-a197655a.js             1.03 kB │ gzip:   0.54 kB
+// dist/assets/AppLayout-8ad6e6e9.js       156.92 kB │ gzip:  46.14 kB
+// dist/assets/index-458ae3a8.js           366.39 kB │ gzip: 102.23 kB
+
+
+
+import CityList from "./components/CityList";
+import CountryList from "./components/CountryList";
+import City from "./components/City";
+import Form from "./components/Form";
+import ProtectedRoute from "./pages/ProtectedRoute";
+import SpinnerFullPage from "./components/SpinnerFullPage";
+
+import { CitiesProvider } from "./contexts/CitiesContext";
+import { AuthProvider } from "./contexts/AuthContext";
+
+function App() {
   return (
-    <div>
-      {/* <h1>Slow counter?!?</h1>
-      <button onClick={() => setCount((c) => c + 1)}>Increase: {count}</button> */}
-      <Counter>
-       <SlowComponent />
-      </Counter>
-    </div>
+    <AuthProvider>
+      <CitiesProvider>
+        <BrowserRouter>
+          <Suspense fallback={<SpinnerFullPage />}>
+            <Routes>
+              <Route index element={<Homepage />} />
+              <Route path="product" element={<Product />} />
+              <Route path="pricing" element={<Pricing />} />
+              <Route path="login" element={<Login />} />
+              <Route
+                path="app"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate replace to="cities" />}></Route>
+                <Route path="cities" element={<CityList />}></Route>
+                <Route path="cities/:id" element={<City />}></Route>
+                <Route path="countries" element={<CountryList />}></Route>
+                <Route path="form" element={<Form />}></Route>
+              </Route>
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </CitiesProvider>
+    </AuthProvider>
   );
 }
 
+export default App;
+
 ```
 
+### Don't Optimize Prematurely
+
+DONT:
+- Dont wrap everything in memo, useMemo or useCallback.
+-  Don't break contexts out into smaller contexts only holding single values to prevent rerenders for subscribed components.
+- Premature optimization will cause a performance hit and make code unreadable
+
+DO:
+- Use profiler to identify bottleneck
+- Watch for laggy behavior
+- Memoize expensive rerenders & calculations
+- Optimize contexts that change often with many subscribers
+- Memoize ctx value and children
+- Implement code splitting/lazy loading 
+
+### useEffect Rules & Best Practices
+
+Dependency Array:
+
+- Every state variable, prop AND context value used inside the effect must be added to the dep array
+- All "reactive" values also must be included. This means for example if a helper function utilizes some state variables and is called inside the useEffect, then we must add that function as a dep because it uses "reactive" values
+- NEVER ignore the `exhaustive-deps` ESLint rule
+- DONT use objects or arrays as dependencies because a new object will not equal the old object even though they look the same
 
 
- 
+**Removing unnecessary dependencies**
+
+Removing helper function dependencies:
+- Move the function inside the effect
+- If you need the function in multiple places, memoize it
+- If the function doesn't reference any reactive values, move it outside the component
+
+Removing object dependencies:
+- Include only the properties you need (Have to be primitives)
+- Use same strategy for functions (Move or memoize)
+
+Other strategies:
+- If you have multiple related reactive values, consider using a `useReducer`
+- You dont need to include `setState` or `dispatch` functions in the array. React guarantess they are stable across renders
+
+**When NOT to use effects**
+
+Effects should be used as a last resort, when no other solution makes sense. The core team calls them an "escape hatch" and have been over used in many scenarios
+
+3 Overuse Cases:
+1. User Events
+ - Should be handled with event handlers even if they create side effects
+2. Fetching data on component mount (Not good for production apps)
+- Use React Query instead or another library
+3. Synchronizing state changes with one another
+- Creates multiple rerenders which is problematic (Use derived state/event handlers instead)
+
