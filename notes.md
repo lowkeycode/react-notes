@@ -5,6 +5,7 @@
 ### Components
 
 Components:
+
 - React apps are made entirely of components
 - Building blocks of the app
 - Have their own look, data and logic
@@ -12,7 +13,7 @@ Components:
 - Can be reused, nested and pass data between them
 - Used in a hierarchical component tree
 - Components are just functions
- 
+
 They need to only return one parent JSX element, if need be wrap siblings in a single div like below, or a fragment `<></>` which will not show as an element in the dom.
 
 ```jsx
@@ -20,7 +21,7 @@ function App() {
   return (
     <div className="container">
       <Header />
-        <Menu />
+      <Menu />
       <Footer />
     </div>
   );
@@ -29,7 +30,6 @@ function App() {
 
 Separation of concerns:
 Components contain data, logic and appearance, so this is a different way of looking at separation of concerns, vs the old style of one file for css, one file for html and one for JS.
-
 
 ### JSX
 
@@ -42,18 +42,19 @@ JSX:
 - We CAN use React w/o JSX
 
 JSX is declarative:
+
 - Describes the UI using current data
 - React is an abstraction (we never touch the DOM)
 - We think of the UI asa reflection of current data
 
 ### Logic Inside Components
 
-Because components are just JS functions we can write JS in them. We can also use JS inside JSX in the return. To use JS we need to "Enter JS mode" which is done using curly brackets  `{}`. Then inside the brackets we need to use JS EXPRESSIONS. So this means ternaries, short-circuiting, variables or return an array using array methods. Statements are NOT VALID in the JSX return. Ex.) if/else statements or switch statements. Styles can also be determined with JS mode inside the style attribute with a ternary.
+Because components are just JS functions we can write JS in them. We can also use JS inside JSX in the return. To use JS we need to "Enter JS mode" which is done using curly brackets `{}`. Then inside the brackets we need to use JS EXPRESSIONS. So this means ternaries, short-circuiting, variables or return an array using array methods. Statements are NOT VALID in the JSX return. Ex.) if/else statements or switch statements. Styles can also be determined with JS mode inside the style attribute with a ternary.
 
 Components can also be used with conditional or early returns
 
-
 Other nots:
+
 - CSS uses `className` instead of `class`
 - `htmlFor` instead of HTML `for` with labels
 - Every tag need to be closed
@@ -70,12 +71,7 @@ function Footer() {
   const isOpen = hour >= openHour && hour <= closeHour;
   console.log(isOpen);
 
-  if (!isOpen)
-  return (
-    <footer>
-      We're not open.
-    </footer>
-  )
+  if (!isOpen) return <footer>We're not open.</footer>;
 
   return (
     <footer className="footer">
@@ -92,6 +88,7 @@ function Footer() {
 ```
 
 Conditional styles:
+
 ```jsx
 function Pizza({ pizzaObj }) {
   return (
@@ -106,8 +103,6 @@ function Pizza({ pizzaObj }) {
   );
 }
 ```
-
-
 
 ### Styles
 
@@ -125,22 +120,217 @@ Props:
 - Props are immutable so children don't touch their parents state
 - One-way data flow from parent to child
 
-
-
 ## State, Events & Forms
 
 ### Events
 
+In React for event handlers we need to pass a function definition to be called when the event occurs NOT a function call
 
 
+State:
+- Data that a component holds over time
+- Updating state causes a component to rerender
 
+useState hook:
+- Returns an array of a state variable and a state updater function
+- Hooks can only be called at the top level of a component & not inside statements (if/else)
+- State should only be updated using the updater function
+- If we want to overwrite state, pass the value directly to the state updater
+- If we want to update state based on the previous state use the anonymous callback that allows access to the previous state
+- Updating state rerenders the component
+ 
 
+```jsx
+function Steps() {
+  const [step, setStep] = useState(1);
+  const [isOpen, setIsOpen] = useState(true);
+
+  function handlePrevious() {
+    if (step > 1) setStep((s) => s - 1);
+  }
+
+  function handleNext() {
+    if (step < 3) {
+      setStep((s) => s + 1);
+      // setStep((s) => s + 1);
+    }
+
+    // BAD PRACTICE
+    // test.name = "Fred";
+    // setTest({ name: "Fred" });
+  }
+
+  return (
+    <div>
+      <button className="close" onClick={() => setIsOpen((is) => !is)}>
+        &times;
+      </button>
+
+      {isOpen && (
+        <div className="steps">
+          <div className="numbers">
+            <div className={step >= 1 ? "active" : ""}>1</div>
+            <div className={step >= 2 ? "active" : ""}>2</div>
+            <div className={step >= 3 ? "active" : ""}>3</div>
+          </div>
+
+          <StepMessage step={step}>
+            {messages[step - 1]}
+            <div className="buttons">
+              <Button
+                bgColor="#e7e7e7"
+                textColor="#333"
+                onClick={() => alert(`Learn how to ${messages[step - 1]}`)}
+              >
+                Learn how
+              </Button>
+            </div>
+          </StepMessage>
+
+          <div className="buttons">
+            <Button bgColor="#7950f2" textColor="#fff" onClick={handlePrevious}>
+              <span>👈</span> Previous
+            </Button>
+
+            <Button bgColor="#7950f2" textColor="#fff" onClick={handleNext}>
+              Next <span>👉</span>
+              <span>🤓</span>
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Forms
+
+#### Controlled Elements
+
+By default input fields in the DOM maintain their own state, so react needs a way to overcome this. This is why we need to "Control" input elements.
+
+Controlling state is done in 3 steps:
+1. Create a piece of state
+2. We specify the value attribute on the input we want to control and set it to that state
+3. Then we need to connect the two by passing a callback to the onChange event that uses the state updating function
+
+Keep in mind, on form submission, we still need to call `e.preventDefault`. Then we can create objects/ data structure from the state, and do whatever we want with it (lift it up etc.).
+
+```jsx
+import { useState } from "react";
+
+export default function Form({ onAddItems }) {
+  const [description, setDescription] = useState("");
+  const [quantity, setQuantity] = useState(1);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!description) return;
+
+    const newItem = { description, quantity, packed: false, id: Date.now() };
+
+    onAddItems(newItem);
+
+    setDescription("");
+    setQuantity(1);
+  }
+
+  return (
+    <form className="add-form" onSubmit={handleSubmit}>
+      <h3>What do you need for your 😍 trip?</h3>
+      <select
+        value={quantity}
+        onChange={(e) => setQuantity(Number(e.target.value))}
+      >
+        {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+          <option value={num} key={num}>
+            {num}
+          </option>
+        ))}
+      </select>
+      <input
+        type="text"
+        placeholder="Item..."
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+      <button>Add</button>
+    </form>
+  );
+}
+
+```
+## State MGMT Intro
+
+- Always start with local state, then as needed move to global state (Context, Redux)
+- We can lift up state by passing a defined function to children as props so we can share state with the parent and amongst siblings
+- We can also derive state, which is preferred if possible to prevent using too much state & causing unnecessary rerenders
+
+We can implement features like SORTING from derived state
+```jsx
+import { useState } from "react";
+import Item from "./Item";
+
+export default function PackingList({
+  items,
+  onDeleteItem,
+  onToggleItem,
+  onClearList,
+}) {
+  const [sortBy, setSortBy] = useState("input");
+
+  let sortedItems;
+
+  if (sortBy === "input") sortedItems = items;
+
+  if (sortBy === "description")
+    sortedItems = items
+      .slice()
+      .sort((a, b) => a.description.localeCompare(b.description));
+
+  if (sortBy === "packed")
+    sortedItems = items
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
+
+  return (
+    <div className="list">
+      <ul>
+        {sortedItems.map((item) => (
+          <Item
+            item={item}
+            onDeleteItem={onDeleteItem}
+            onToggleItem={onToggleItem}
+            key={item.id}
+          />
+        ))}
+      </ul>
+
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by input order</option>
+          <option value="description">Sort by description</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+        <button onClick={onClearList}>Clear list</button>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## Components, Composition & Reusability
 
 
 
 
 # ===========================================
+
 # ============== CONTINUE HERE ==============
+
 # ===========================================
 
 ## Custom Hooks, Refs & More State
@@ -449,7 +639,6 @@ We used create-react-app prior to this as it comes setup with eslint and many ot
 
 To setup eslint we run `npm i eslint vite-plugin-eslint eslint-config-react-app --save-dev`
 Then we needs to create an `eslintrc.json` to extends the default rules of eslint with the react rules we just installed
-
 
 ```json
 // eslintrc.json
@@ -1353,11 +1542,11 @@ function PostProvider({children}) {
 }
 ```
 
-
 ### Memoization
 
 Memoization:
-  - An optimization technique that executes a pure function once, then stores the results in memory. If the function is called again with the exact same inputs then the cached value is used and the function is not executed again. Otherwise if the inputs change, then it will execute again.
+
+- An optimization technique that executes a pure function once, then stores the results in memory. If the function is called again with the exact same inputs then the cached value is used and the function is not executed again. Otherwise if the inputs change, then it will execute again.
 
 In React we can a few memoization techniques
 
@@ -1366,9 +1555,9 @@ In React we can a few memoization techniques
 3. Function memoization with `useCallback`
 
 These:
+
 1. Prevent wasted renders
 2. Improve app speed/responsiveness
-
 
 #### Memo
 
@@ -1393,28 +1582,28 @@ function ToggleSounds({ allowSound, setAllowSound }) {
 }
 
 export default memo(ToggleSounds);
-
 ```
 
 #### useMemo & useCallback
 
-If we have an object or function created inside a component and that component rerenders, even if the object/function looks exactly the same it is actually a brand new one. 
+If we have an object or function created inside a component and that component rerenders, even if the object/function looks exactly the same it is actually a brand new one.
 
 - useMemo is used to cache values (Objects)
 - useCallback is used to cache functions
 - Cached values/functions will be returned as long as dependencies (in the dependency array) stay the same, otherwise the value will be recreated
- 
+
 3 main use cases:
+
 1. Memoizing props to prevent wasted rerenders
 2. Memoize values to prevent expensive recalculations
 3. Memoizing values that are use in the dependency array of another hook
-
 
 useCallback Example:
 
 In the app when the `city:id` route is rendered from clicking on a city in the city list the id is updated in the url and the city component mounts. When the id changes the useEffect dependent on that id will run and call `getCity(id)`. We can see in the context that getCity updates the state, causing a rerender of the provider, which will cause a rerender of the city component, which will call `getCity` AGAIN resulting in another state update and an infinite loop.
 
 the solver as shown below is to use `useCallback` to memoize the function to prevent the value from being recalculated if the input has not changed, solving our problem and preventing the infinite loop.
+
 ```jsx
 // App.jsx
 function App() {
@@ -1452,8 +1641,9 @@ function App() {
 
 ```jsx
 // CitiesContext.jsx
-const getCity = useCallback(async function getCity(id) {
-    if(Number(id) === currentCity.id) return;
+const getCity = useCallback(
+  async function getCity(id) {
+    if (Number(id) === currentCity.id) return;
     try {
       dispatch({ type: "LOADING", payload: true });
       const res = await fetch(`${BASE_URL}/cities/${id}`);
@@ -1463,9 +1653,10 @@ const getCity = useCallback(async function getCity(id) {
       console.log(`There was an error getting the city! ${error.message}`);
       dispatch({ type: "ERROR", payload: error.message });
     }
-  }, [currentCity.id])
+  },
+  [currentCity.id]
+);
 ```
-
 
 ```jsx
 // City.jsx
@@ -1482,7 +1673,7 @@ function City() {
 
   if(isLoading) return <Spinner/ >
 
-  
+
   return (
     etc...
   )
@@ -1490,13 +1681,16 @@ function City() {
 
 ### Code Splitting (Optimizing Bundle Size) - Suspense Intro
 
-Bundle: 
+Bundle:
+
 - JS file containing the entire apps code. Downloading it will load the entire app at once. This gives us an SPA
 
-Bundle Size: 
+Bundle Size:
+
 - Amount of JS the user needs to download
 
-Code Splitting: 
+Code Splitting:
+
 - Splitting the bundle into multiple smaller parts so it can be downloaded over tim as parts are needed "lazy loading"
 
 A common practice is to split apps at the page level, but can ALSO be done with COMPONENTS.
@@ -1543,8 +1737,6 @@ const PageNotFound = lazy(() => import("./pages/PageNotFound"));
 // dist/assets/AppLayout-8ad6e6e9.js       156.92 kB │ gzip:  46.14 kB
 // dist/assets/index-458ae3a8.js           366.39 kB │ gzip: 102.23 kB
 
-
-
 import CityList from "./components/CityList";
 import CountryList from "./components/CountryList";
 import City from "./components/City";
@@ -1590,23 +1782,24 @@ function App() {
 }
 
 export default App;
-
 ```
 
 ### Don't Optimize Prematurely
 
 DONT:
+
 - Dont wrap everything in memo, useMemo or useCallback.
--  Don't break contexts out into smaller contexts only holding single values to prevent rerenders for subscribed components.
+- Don't break contexts out into smaller contexts only holding single values to prevent rerenders for subscribed components.
 - Premature optimization will cause a performance hit and make code unreadable
 
 DO:
+
 - Use profiler to identify bottleneck
 - Watch for laggy behavior
 - Memoize expensive rerenders & calculations
 - Optimize contexts that change often with many subscribers
 - Memoize ctx value and children
-- Implement code splitting/lazy loading 
+- Implement code splitting/lazy loading
 
 ### useEffect Rules & Best Practices
 
@@ -1617,19 +1810,21 @@ Dependency Array:
 - NEVER ignore the `exhaustive-deps` ESLint rule
 - DONT use objects or arrays as dependencies because a new object will not equal the old object even though they look the same
 
-
 **Removing unnecessary dependencies**
 
 Removing helper function dependencies:
+
 - Move the function inside the effect
 - If you need the function in multiple places, memoize it
 - If the function doesn't reference any reactive values, move it outside the component
 
 Removing object dependencies:
+
 - Include only the properties you need (Have to be primitives)
 - Use same strategy for functions (Move or memoize)
 
 Other strategies:
+
 - If you have multiple related reactive values, consider using a `useReducer`
 - You dont need to include `setState` or `dispatch` functions in the array. React guarantess they are stable across renders
 
@@ -1638,10 +1833,15 @@ Other strategies:
 Effects should be used as a last resort, when no other solution makes sense. The core team calls them an "escape hatch" and have been over used in many scenarios
 
 3 Overuse Cases:
-1. User Events
- - Should be handled with event handlers even if they create side effects
-2. Fetching data on component mount (Not good for production apps)
-- Use React Query instead or another library
-3. Synchronizing state changes with one another
-- Creates multiple rerenders which is problematic (Use derived state/event handlers instead)
 
+1. User Events
+
+- Should be handled with event handlers even if they create side effects
+
+2. Fetching data on component mount (Not good for production apps)
+
+- Use React Query instead or another library
+
+3. Synchronizing state changes with one another
+
+- Creates multiple rerenders which is problematic (Use derived state/event handlers instead)
