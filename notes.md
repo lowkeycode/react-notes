@@ -324,6 +324,175 @@ export default function PackingList({
 
 ## Components, Composition & Reusability
 
+- Components like functions should be abstracted when they get too big, but not too often with too many small components. This is more intuitive but don't worry about big components, moreso worry about if it's doing too many things.
+
+We can use component composition by using the children prop to prevent prop drilling.
+
+```jsx
+export default function App() {
+  const [movies, setMovies] = useState(tempMovieData);
+  const [watched, setWatched] = useState(tempWatchedData);
+
+  return (
+    <>
+      <NavBar>
+        <Search />
+        <NumResults movies={movies} />
+      </NavBar>
+
+      <Main>
+        <Box>
+          <MovieList movies={movies} />
+        </Box>
+
+        <Box>
+          <WatchedSummary watched={watched} />
+          <WatchedMoviesList watched={watched} />
+        </Box>
+      </Main>
+    </>
+  );
+}
+```
+
+## React Behind The Scenes
+
+### Components, Instances & Elements
+
+Component:
+- Function that re turns a react elements tree (JSX)
+- Blueprints
+
+Instance:
+- When we use the component
+- Each instance gets its own separate state, props and lifecycle
+
+Element:
+- All elements from the JSX are converted to `React.createElement` calls
+- These come together in a big object called the VDOM(Virtual DOM or more accurately "React Element Tree")
+
+
+### Rendering
+
+1. Render is triggered
+- Either on initial render
+- Or rerender by a state update
+
+2. Render Phase
+- Component functions are called & react figures out HOW to update the DOM
+- This only happens internally inside react (Not the traditional term of render)
+
+3. Commit Phase
+- React writes to the DOM, inserting, updating and deleting elements
+
+4. Browser Paint
+- This is outside of React at this point but this is the final step that produces the visual change that users see
+
+#### Render Triggers
+
+Only 2 ways:
+- Initial render
+- State update in on or more components (rerender)
+
+*Render process is always triggered for the whole application* (React looks at the entire tree)
+- Renders are scheduled when the JS engine has time
+
+#### Render Phase
+
+- React goes through the ENTIRE component tree to see which components triggered a render and call those component functions which results in a new VDOM (React Element Tree)
+
+Initial Render:
+- React calls all components to create a VDOM (React Element Tree)
+- Actually just a POJO (Plain old javascript object)
+
+Rerenders:
+- State update happens
+- React goes through tree and calls components that triggered a render (state update)
+- ALL CHILDREN OF THAT COMPONENT ARE RERENDERED no matter what
+- This only means that the VDOM is recreated NOT the actual DOM
+- The new VDOM is then reconciled & diffed against the FIBER TREE as it existed before the state update inside Reacts reconciler called "Fiber" hence the name "Fiber Tree", resulting in a new updated "Fiber Tree" and is then used to write to the DOM
+
+Reconciliation:
+- Writing to the DOM is slow and thats why React does this reconciliation against the VDOM because its cheaper and usually only certain parts need updates/creation/deletion
+- Result of this is a list of operations to perform on the DOM with the new state
+- "Fiber" is the engine of React
+- Fiber creates a fiber tree from the React Element Tree which has a "fiber" for each component instance and DOM element
+- Fibers are NOT created on every render, but rather mutated over and over again
+- Each fiber contains current state, props, side effects, used hooks and queue of work to be performed
+- Fibers are arranged in a linked list, which makes it easier for react to process work
+- Work can be performed asynchronously which enables new features like `Suspense` and transitions
+- Long renders are non-blocking
+- New "Work in progress" fiber tree created
+- List of DOM updates is created
+
+Commit Phase:
+- React writes to the DOM ("Flushes" to the DOM)
+- Committing is synchronous (DOM updated in one go and cant be interrupted to ensure no impartial results)
+- Work in progress fiber tree becomes the current fiber tree for the next cycle
+- Done by the web host `react-dom` 
+- This is what makes react cross platform as the commit phase is done by different "hosts"
+
+Browser Paint:
+- Done by whatever browser the user is using
+
+### Diffing
+
+2 Assumptions:
+1. 2 elements of different types will produce different trees
+2. Elements with a stable key will stay the same across renders
+
+Only 2 different scenarios:
+- Same position DIFFERENT element
+- Same position SAME element
+
+1. Same position DIFFERENT element (DOM or React element)
+- Entire subtree including state considered invalid and removed
+- This means child state might be completely reset
+
+2. Same position SAME element (DOM or React element)
+- Element & children and state is kept
+- New props/attributes are passed if the changed between renders and again element and children are kept
+- If we want to keep state, we can use the key prop to differentiate unique elements of the same type
+- If we want to clear out state, we can use the key prop and change it
+
+### Render Logic
+There is:
+- Render logic (State and things that produce JSX)
+- Event handlers
+
+Components are pure functions, so given the same input (props) will produce the same output (JSX)
+
+Rules for render logic:
+- No side effects
+- Dont perform network requests
+- Dont start timers
+- Dont use DOM APIs
+- Dont mutate objects or variables outside function scope
+- Dont update state or refs (This causes infinite loops)
+
+
+Side effects should be done with:
+- Event handlers (default strategy)
+- Effects
+
+*Side Note*
+State in event handler functions are batched and asynchronous. This is where using set state with the callback accessing the previous state is helpful.
+We can see this happen if we console log a state we just updated, we get the old value.
+
+### React Events
+
+React uses event delegation automatically for us on the root element. 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
