@@ -484,23 +484,20 @@ We can see this happen if we console log a state we just updated, we get the old
 React uses event delegation automatically for us on the root element. 
 
 
+## Effects & Data Fetching
 
+When are effects Executed?
+Effects run after the component mounts, because effects may contain long running logic like fetching data
 
+- Mount (Initial Render)
+- Commit
+- Browser Paint
+- EFFECT
 
+NOTE:
+Setting state inside an effect will cause additional rerender and they should NOT BE OVERUSED
 
-
-
-
-
-
-
-
-
-# ===========================================
-
-# ============== CONTINUE HERE ==============
-
-# ===========================================
+Use effect also has cleanup function that can be returned from it's callback to perform cleanup work as needed. Ex.) Clearing a timer, using an abort controller
 
 ## Custom Hooks, Refs & More State
 
