@@ -1,7 +1,147 @@
-**_try not to rm -rf these ones..._**
-👋 See ya later 1000 or so lines of notes...
-
 # React
+
+## Components, Props & JSX
+
+### Components
+
+Components:
+- React apps are made entirely of components
+- Building blocks of the app
+- Have their own look, data and logic
+- Build UIs by combining them
+- Can be reused, nested and pass data between them
+- Used in a hierarchical component tree
+- Components are just functions
+ 
+They need to only return one parent JSX element, if need be wrap siblings in a single div like below, or a fragment `<></>` which will not show as an element in the dom.
+
+```jsx
+function App() {
+  return (
+    <div className="container">
+      <Header />
+        <Menu />
+      <Footer />
+    </div>
+  );
+}
+```
+
+Separation of concerns:
+Components contain data, logic and appearance, so this is a different way of looking at separation of concerns, vs the old style of one file for css, one file for html and one for JS.
+
+
+### JSX
+
+JSX:
+
+- Declarative syntax to describe how components look and work
+- Components MUST return a block of JSX
+- Extension of JS that allows us to embed JS, CSS and REact into HTML
+- Each JSX element is converted to a `React.createElement()` function call
+- We CAN use React w/o JSX
+
+JSX is declarative:
+- Describes the UI using current data
+- React is an abstraction (we never touch the DOM)
+- We think of the UI asa reflection of current data
+
+### Logic Inside Components
+
+Because components are just JS functions we can write JS in them. We can also use JS inside JSX in the return. To use JS we need to "Enter JS mode" which is done using curly brackets  `{}`. Then inside the brackets we need to use JS EXPRESSIONS. So this means ternaries, short-circuiting, variables or return an array using array methods. Statements are NOT VALID in the JSX return. Ex.) if/else statements or switch statements. Styles can also be determined with JS mode inside the style attribute with a ternary.
+
+Components can also be used with conditional or early returns
+
+
+Other nots:
+- CSS uses `className` instead of `class`
+- `htmlFor` instead of HTML `for` with labels
+- Every tag need to be closed
+- Event handlers are camelCased `onSubmit`
+- `aria-` and `data-` attributes are the same as HTML (lowercase with dash)
+- CSS property names are camelCased `backgroundColor`
+- Comments are inside `{}` because they're JS
+
+```jsx
+function Footer() {
+  const hour = new Date().getHours();
+  const openHour = 12;
+  const closeHour = 22;
+  const isOpen = hour >= openHour && hour <= closeHour;
+  console.log(isOpen);
+
+  if (!isOpen)
+  return (
+    <footer>
+      We're not open.
+    </footer>
+  )
+
+  return (
+    <footer className="footer">
+      {isOpen ? (
+        <Order closeHour={closeHour} openHour={openHour} />
+      ) : (
+        <p>
+          We're happy to welcome you between {openHour}:00 and {closeHour}:00.
+        </p>
+      )}
+    </footer>
+  );
+}
+```
+
+Conditional styles:
+```jsx
+function Pizza({ pizzaObj }) {
+  return (
+    <li className={`pizza ${pizzaObj.soldOut ? "sold-out" : ""}`}>
+      <img src={pizzaObj.photoName} alt={pizzaObj.name} />
+      <div>
+        <h3>{pizzaObj.name}</h3>
+        <p>{pizzaObj.ingredients}</p>
+        <span>{pizzaObj.soldOut ? "SOLD OUT" : pizzaObj.price}</span>
+      </div>
+    </li>
+  );
+}
+```
+
+
+
+### Styles
+
+Styles inside the index.css are global, whereas any styles added inside the component are inline or styles added from css modules are scoped to that component.
+
+### Props
+
+Props:
+
+- Used to pass data from parent to child
+- Parents can control how children look and work
+- Anything can be passed as props even other components
+- Props are READ ONLY and COME FROM THE PARENT
+- Props can only be updated by the parent which means at that point its just a parent updating its own state
+- Props are immutable so children don't touch their parents state
+- One-way data flow from parent to child
+
+
+
+## State, Events & Forms
+
+### Events
+
+
+
+
+
+
+
+
+
+# ===========================================
+# ============== CONTINUE HERE ==============
+# ===========================================
 
 ## Custom Hooks, Refs & More State
 
