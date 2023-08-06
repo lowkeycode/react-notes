@@ -2774,3 +2774,121 @@ Redux Tool Kit
 - Write code that "Looks like" it mutates state inside reducers (Using a library called Immer which converts our code back to non-mutating) This allows for complex state to be easily managed
 - Automatically creates action creators from our reducers, which CAN create extra work for us in some instances
 - Automatic setup of Thunk middleware & Redux devtools
+
+
+`npm i @reduxjs/toolkit`
+
+The store with RTK (much simpler):
+```js
+// store.js
+import accountReducer from "./features/accounts/accountSlice";
+import customerReducer from "./features/customers/customerSlice";
+
+import { configureStore } from "@reduxjs/toolkit";
+
+const store = configureStore({
+  reducer: { account: accountReducer, customer: customerReducer },
+});
+
+export default store;
+
+```
+
+The concept of slices is baked into RTK. So now we get a `createSlice` function that we pass a config object to build our slice. We give it:
+- A name
+- The initial state
+- Our reducers
+  - The reducers are now seemingly mutating state directly so we dont need to copy the old state or return a new state, we directly assign new values to the state
+
+The reducers in RTK by default only accept one value as the payload. If we want more then we need to use prepare function before the reducer to define a multi-value payload as seen in `requestLoan`.
+
+
+```js
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialState = {
+  balance: 0,
+  loan: 0,
+  loanPurpose: "",
+  isLoading: false,
+};
+
+const accountSlice = createSlice({
+  name: "account",
+  initialState,
+  reducers: {
+    deposit(state, action) {
+      state.balance += action.payload;
+    },
+    withdraw(state, action) {
+      state.balance -= action.payload;
+    },
+    requestLoan: {
+      prepare(amount, purpose) {
+        return {
+          payload: { amount, purpose },
+        };
+      },
+      reducer(state, action) {
+        if (state.loan > 0) return;
+        state.loan = action.payload.amount;
+        state.loanPurpose = action.payload.purpose;
+        state.balance += action.payload.amount;
+      },
+    },
+    payLoan(state, action) {
+      state.balance -= state.loan;
+      state.loan = 0;
+      state.loanPurpose = "";
+    },
+  },
+});
+
+export const { deposit, withdraw, requestLoan, payLoan } = accountSlice.actions;
+
+export default accountSlice.reducer;
+
+```
+
+Another footgun from being so opinionated is that updates to state now have to happen IN THE ORDER THEY SHOULD OCCUR. Notice below the example if the loan is set to 0 first, then the second line `state.balance -= state.loan;` would result in `0` being subtracted from the `state.balance`, so the balance wouldn't even change.
+```js
+payLoan(state, action) {
+  state.loan = 0;
+  state.balance -= state.loan;
+  state.loanPurpose = "";
+},
+```
+
+### Redux vs Context API
+
+Context + useReducer:
+- Built into React
+- Easy to setup single context
+- Additional state "slice" requires a new context for each (leads to provider hell in App.js)
+- No mechanism for async ops (Should be done here anyway)
+- Performance optimization is a pain
+- Only simple React devtools
+
+Redux:
+- 3rd party library (larger bundle size)
+- More work to set up initially
+- Easy to create new slices
+- Supports middleware for async ops (Thunks built in)
+- Performance optimization out of the box
+- Excellent dev tools
+
+Usage:
+
+Generic advice - Use context for small apps, redux for large ones 
+
+Context + useReducer:
+- Good with values that don't change often
+- Solve prop drilling
+- Manage state in a smaller sub-tree of the app (compound component pattern)
+
+Redux:
+- Global UI state that changes often (Shopping cart, current tabs, filts, search) because it is automatically optimized for this
+- Complex state with nested objects/arrays (RTK allows you to mutate state)
+- Not super common for UI state (Redux has started to fall out of favor)
+
+Good advice - Use whats best for your app based on your needs and make an educated decision
