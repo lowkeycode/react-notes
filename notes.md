@@ -565,7 +565,7 @@ function Search({ query, setQuery }) {
 If the logic you want to reuse doesn't contain any hooks, just create a reusable helper function. If it DOES CONTAIN HOOKS, then implement a custom hook.
 
 - Need to be prefixed with `use`
-- Allow us to use non-visual logic
+- Allow us to reuse non-visual logic
 - A custom hook should have one purpose to make it reusable and portable
 - Rules of hooks still apply
 
@@ -860,7 +860,7 @@ These are baked into react and will scope styles to the component only. All you 
 
 **UMD Global & Other random errors**
 
-After adding a `jsconfig.json` then removing it. I started getting typescript errors everywhere. I implemented a basic jsconfig.json as per VS Code docs after 2 1/2hrs of struggling to figure out what the fuck went wrong.
+After adding a `jsconfig.json` then removing it. I started getting typescript errors everywhere. I implemented a basic jsconfig.json as per VS Code docs after 2 1/2hrs of struggling to figure out what the fuck went wrong. Sometimes adding an empty jsconfig.json fixes these errors
 
 ```json
 // jsconfig.json
@@ -918,8 +918,10 @@ function Sidebar() {
     <div className={styles.sidebar}>
       <Logo />
       <AppNav />
+
       // OUTLET HERE
       <Outlet />
+
       <footer className={styles.footer}>
         <p className={styles.copyright}>
           &copy; Copyright {new Date().getFullYear()} by WorldWise Inc.
@@ -1009,7 +1011,7 @@ function CityItem({ city }) {
 }
 ```
 
-Then we can use another hook called the `getMeMyFuckingQueryStrings` hook, and destructure as needed in any component that is currently rendered.
+Then we can use another hook called the `useSearchParams` hook, and destructure as needed in any component that is currently rendered.
 
 Search params are accessed using `searchParams.get('paramName')` which is a convention in web dev
 
@@ -1074,7 +1076,7 @@ return (
 );
 ```
 
-Or we can use it to go back. (I assume its based onthe browser history api)
+Or we can use it to go back. (I assume its based on the browser history api)
 
 ```jsx
 <Button
@@ -1861,7 +1863,7 @@ Code Splitting:
 
 A common practice is to split apps at the page level, but can ALSO be done with COMPONENTS.
 
-To lazy load/code split pages/components we store the result of xalling the react `lazy` function which takes a callback that return the JS dynamic `import` function with the path to the page/component. Then vite automatically takes care of the code splitting for us. We wrap the Routes in the react `Suspense` component giving it a fallback prop which is the desired fallback component (in this case a spinner). Then we can see the differences in bundle sizes (commented out) from one big chunks to a bunch of smaller ones. Additionally after the initial slower load of a page, when the use navigate back the chunk is already loaded and very fast.
+To lazy load/code split pages/components we store the result of calling the react `lazy` function which takes a callback that return the JS dynamic `import` function with the path to the page/component. Then vite automatically takes care of the code splitting for us. We wrap the Routes in the react `Suspense` component giving it a fallback prop which is the desired fallback component (in this case a spinner). Then we can see the differences in bundle sizes (commented out) from one big chunks to a bunch of smaller ones. Additionally after the initial slower load of a page, when the use navigate back the chunk is already loaded and very fast.
 
 ```jsx
 // App.jsx
@@ -2011,3 +2013,764 @@ Effects should be used as a last resort, when no other solution makes sense. The
 3. Synchronizing state changes with one another
 
 - Creates multiple rerenders which is problematic (Use derived state/event handlers instead)
+
+
+### State Updates Based On Other State
+
+This is usually not desirable but the alternative is putting the repeated calculations across multiple setState functions. The issue here is that when one of the dependencies is updated it causes a rerender, which also causes the effect to run, which ALSO causes a second render. So this usually is avoided when possible.
+
+```jsx
+useEffect(() => {
+    setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak)
+  }, [number, sets, speed, durationBreak])
+```
+
+### Helper Functions In Effects
+
+When we use helper functions inside a useEffect, we need to add it to the dependency array. But it causes issues. When we use the `handleInc/Dec` functions we are causing an update to the duration state which causes a rerender of the component and recreates the `playSound` function and because its a dependency of the useEffect, the effect gets runs again. this causes the duration to be set again, but using the current value which actually hasn't changed. This is why we see it flicker to the increased value, then immediately flash back to the original value.
+
+If we walk through the possible solves...
+
+We could move it outside the component:
+- Wouldn't work because its a reactive value and depends on other state from props
+
+We could move in inside the effect: 
+- Wouldn't work because then we would lose scope of it and couldn't use it inside our event handlers
+
+We could memoize it:
+- This also breaks down quickly as described below
+
+```jsx
+import { memo, useEffect, useState } from 'react';
+import clickSound from './ClickSound.m4a';
+
+function Calculator({ workouts, allowSound }) {
+  const [number, setNumber] = useState(workouts.at(0).numExercises);
+  const [sets, setSets] = useState(3);
+  const [speed, setSpeed] = useState(90);
+  const [durationBreak, setDurationBreak] = useState(5);
+
+  const [duration, setDuration] = useState(0)
+  // const duration = (number * sets * speed) / 60 + (sets - 1) * durationBreak;
+
+  const playSound = function () {
+    if (!allowSound) return;
+    const sound = new Audio(clickSound);
+    sound.play();
+  };
+
+  useEffect(() => {
+    setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
+    playSound();
+  }, [number, sets, speed, durationBreak, playSound])
+
+  function handleInc() {
+    setDuration(dur => Math.floor(dur) + 1);
+    playSound();
+  }
+
+  function handleDec() {
+    setDuration(dur => dur > 1 ? Math.floor(dur) - 1 : 0)
+    playSound();
+  }
+
+
+  const mins = Math.floor(duration);
+  const seconds = (duration - mins) * 60;
+
+  return (
+    <>
+      <form>
+        <div>
+          <label>Type of workout</label>
+          <select value={number} onChange={(e) => setNumber(+e.target.value)}>
+            {workouts.map((workout) => (
+              <option value={workout.numExercises} key={workout.name}>
+                {workout.name} ({workout.numExercises} exercises)
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label>How many sets?</label>
+          <input
+            type='range'
+            min='1'
+            max='5'
+            value={sets}
+            onChange={(e) => setSets(e.target.value)}
+          />
+          <span>{sets}</span>
+        </div>
+        <div>
+          <label>How fast are you?</label>
+          <input
+            type='range'
+            min='30'
+            max='180'
+            step='30'
+            value={speed}
+            onChange={(e) => setSpeed(e.target.value)}
+          />
+          <span>{speed} sec/exercise</span>
+        </div>
+        <div>
+          <label>Break length</label>
+          <input
+            type='range'
+            min='1'
+            max='10'
+            value={durationBreak}
+            onChange={(e) => setDurationBreak(e.target.value)}
+          />
+          <span>{durationBreak} minutes/break</span>
+        </div>
+      </form>
+      <section>
+        <button onClick={handleDec}>–</button>
+        <p>
+          {mins < 10 && '0'}
+          {mins}:{seconds < 10 && '0'}
+          {seconds}
+        </p>
+        <button onClick={handleInc}>+</button>
+      </section>
+    </>
+  );
+}
+
+export default memo(Calculator);
+
+```
+
+Memoized:
+
+This however creates a weird bug where when the `allowedSound` value changes. Because its part of the dependency array of useCallback the function gets recreated, and because the function itself is a dependency of the useEffect, then the playSound function is called and we hear a sound when turning sound on. Additionally if we inc/dec a bunch of times then turn the sound off/on then our duration gets reset because of the same reasons above
+```jsx
+const playSound = useCallback(
+    function () {
+      if (!allowSound) return;
+      const sound = new Audio(clickSound);
+      sound.play();
+    },
+    [allowSound]
+  );
+
+  useEffect(() => {
+    setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
+    playSound();
+  }, [number, sets, speed, durationBreak, playSound])
+```
+
+
+The proper solve is to move separate logic between effects. Give them single responsibility. So we let the one effect deal with setting the duration and the other with playing the sound,
+
+
+```jsx
+unction Calculator({ workouts, allowSound }) {
+  const [number, setNumber] = useState(workouts.at(0).numExercises);
+  const [sets, setSets] = useState(3);
+  const [speed, setSpeed] = useState(90);
+  const [durationBreak, setDurationBreak] = useState(5);
+
+  const [duration, setDuration] = useState(0);
+  // const duration = (number * sets * speed) / 60 + (sets - 1) * durationBreak;
+
+  // const playSound = useCallback(
+  //   function () {
+  //     if (!allowSound) return;
+  //     const sound = new Audio(clickSound);
+  //     sound.play();
+  //   },
+  //   [allowSound]
+  // );
+
+  useEffect(() => {
+    const playSound = function () {
+      if (!allowSound) return;
+      const sound = new Audio(clickSound);
+      sound.play();
+    };
+    playSound();
+  }, [duration, allowSound]);
+
+  useEffect(() => {
+    setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
+  }, [number, sets, speed, durationBreak]);
+
+  function handleInc() {
+    setDuration((dur) => Math.floor(dur) + 1);
+  }
+
+  function handleDec() {
+    setDuration((dur) => (dur > 1 ? Math.floor(dur) - 1 : 0));
+  }
+
+  return (
+    etc...
+  )
+```
+
+## Redux & Redux Toolkit (Thunks)
+
+Redux:
+
+- 3rd party library to manage state
+- Global state stored in a "store" using "actions" (similar to useReducer)
+- Global store updated -> All consuming components rerender 
+- Conceptually similar to combining Context with usereducer
+- 2 ways to write Redux: 1) Classic Redux 2) Redux Tool Kit
+- Goal is to make state update logic separate from the rest of the app
+
+Do you need Redux?
+- Historically it was used in most React apps for global state, but now there are many alternatives. Many apps dont need it unless they have a lot of global state
+
+1. It can be hard to learn so its good to know how it works
+2. You WILL encounter it so you should understand it
+3. Some apps require it or something similar
+
+With useReducer we have and event handler which -> dispatches an action with a payload -> to the reducer which -> takes the current state along with the action payload and returns -> a new state which -> causes a rerender.
+
+Redux is similar but:
+Event handler which -> Action creator function (An optional convention which makes writing actions easier and keeps them in a central place) which -> goes through a dispatcher to -> the store where one or more reducer live which are pure functions and take the current state along with the action payload (usually one reducer per app feature) and returns -> a new state which -> causes a rerender.
+
+
+### Action Creators Intro
+
+`npm i redux`
+
+Using `createStore` is deprecated but Redux team recommends still for learning
+
+The following code is pretty self-explanatory:
+
+We can create multiple reducer for our store. We do this by, for each one defining their initial state to be passed in as defaults and switch over the action.type as usual performing necessary state updates as needed. Then we use the `combineReducers` function to combine them into a rootReducer that we pass to `createStore` to create our store with our different reducers.
+
+In our actionCreators we dispatch our desired actions.
+
+**Note**
+Our action types that we define as per Redux team convention Ex.) `customer/createCustomer` have nothihng to do with Redux. They could be called anything and Redux under the hood figures out which actions are related to what reducer. Our naming has nothing to do with it.
+
+```js
+// store.js
+const { createStore, combineReducers } = require("redux");
+
+const initialStateAccount = {
+  balance: 0,
+  loan: 0,
+  loanPurpose: "",
+};
+
+const initialStateCustomer = {
+  fullName: "",
+  nationalID: "",
+  createAt: "",
+};
+
+function accountReducer(state = initialStateAccount, action) {
+  switch (action.type) {
+    case "account/deposit":
+      return { ...state, balance: state.balance + action.payload };
+    case "account/withdraw":
+      return { ...state, balance: state.balance - action.payload };
+    case "account/requestLoan":
+      if (state.loan > 0) return state;
+      return {
+        ...state,
+        loan: action.payload.amount,
+        loanPurpose: action.payload.purpose,
+        balance: state.balance + action.payload.amount,
+      };
+    case "account/payLoan":
+      return {
+        ...state,
+        loan: 0,
+        loanPurpose: "",
+        balance: state.balance - state.loan,
+      };
+    default:
+      return state;
+  }
+}
+
+function customerReducer(state = initialStateCustomer, action) {
+  switch (action.type) {
+    case "customer/createCustomer":
+      return {
+        ...state,
+        fullName: action.payload.fullName,
+        nationalID: action.payload.nationalID,
+        createdAt: action.payload.createdAt,
+      };
+    case "customer/updateName":
+      return { ...state, fullName: action.payload };
+    default:
+      return state;
+  }
+}
+
+const rootReducer = combineReducers({
+  account: accountReducer,
+  customer: customerReducer
+})
+
+const store = createStore(rootReducer);
+
+function deposit(amount) {
+  return { type: "account/deposit", payload: amount };
+}
+
+function withdraw(amount) {
+  return { type: "account/withdraw", payload: amount };
+}
+
+function requestLoan(amount, purpose) {
+  return {
+    type: "account/requestLoan",
+    payload: { amount, purpose },
+  };
+}
+
+function payLoan() {
+  return { type: "account/payLoan" };
+}
+
+store.dispatch(deposit(1000))
+store.dispatch(withdraw(200))
+console.log(store.getState());
+
+store.dispatch(requestLoan(200, "Small loan"))
+console.log(store.getState());
+
+store.dispatch(payLoan())
+console.log(store.getState());
+
+function createCustomer(fullName, nationalID) {
+  return {
+    type: "customer/createCustomer",
+    payload: { fullName, nationalID, createdAt: new Date().toISOString() },
+  };
+}
+
+function updateName(fullName) {
+  return { type: "customer/updateName", payload: fullName };
+}
+
+store.dispatch(createCustomer('Cam Remesz', 666));
+console.log(store.getState());
+store.dispatch(updateName('Cameron Remesz'));
+console.log(store.getState());
+
+```
+
+### File Structure: State Slices
+
+For a more organized file structure we create `feature` FOLDERS ex.) `customers` and store all customer related files in there including components. There we would add our `customerSlice.js`. Then do that for all our other pieces of state related to redux. Then at the top level of our `src` folder we have our `store.js` file and as we can see is a default export. We import it into our `index.js` and wrap the entire app in the `Provider`
+
+```js
+// accountSlice.js
+const initialStateAccount = {
+  balance: 0,
+  loan: 0,
+  loanPurpose: "",
+};
+
+export default function accountReducer(state = initialStateAccount, action) {
+  switch (action.type) {
+    case "account/deposit":
+      return { ...state, balance: state.balance + action.payload };
+    case "account/withdraw":
+      return { ...state, balance: state.balance - action.payload };
+    case "account/requestLoan":
+      if (state.loan > 0) return state;
+      return {
+        ...state,
+        loan: action.payload.amount,
+        loanPurpose: action.payload.purpose,
+        balance: state.balance + action.payload.amount,
+      };
+    case "account/payLoan":
+      return {
+        ...state,
+        loan: 0,
+        loanPurpose: "",
+        balance: state.balance - state.loan,
+      };
+    default:
+      return state;
+  }
+}
+
+export function deposit(amount) {
+  return { type: "account/deposit", payload: amount };
+}
+
+export function withdraw(amount) {
+  return { type: "account/withdraw", payload: amount };
+}
+
+export function requestLoan(amount, purpose) {
+  return {
+    type: "account/requestLoan",
+    payload: { amount, purpose },
+  };
+}
+
+export function payLoan() {
+  return { type: "account/payLoan" };
+}
+```
+
+```js
+// customerSlice.js
+const initialStateCustomer = {
+  fullName: "",
+  nationalID: "",
+  createAt: "",
+};
+
+export default function customerReducer(state = initialStateCustomer, action) {
+  switch (action.type) {
+    case "customer/createCustomer":
+      return {
+        ...state,
+        fullName: action.payload.fullName,
+        nationalID: action.payload.nationalID,
+        createdAt: action.payload.createdAt,
+      };
+    case "customer/updateName":
+      return { ...state, fullName: action.payload };
+    default:
+      return state;
+  }
+}
+
+export function createCustomer(fullName, nationalID) {
+  return {
+    type: "customer/createCustomer",
+    payload: { fullName, nationalID, createdAt: new Date().toISOString() },
+  };
+}
+
+export function updateName(fullName) {
+  return { type: "customer/updateName", payload: fullName };
+}
+
+```
+We run:
+`npm i react-redux`
+
+Then our whole application has access to the store. We will also now access the dispatch method through the `react-redux` library which will give us the `store.dispatch` as a hook as seen further on.
+
+```js
+// store.js
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import { Provider } from "react-redux";
+
+import store from "./store";
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>
+);
+
+```
+
+Then in any component we can use `useSelector` to access our desired part of the store.
+Here obviously the name is blank because we haven't set it but this creates a subscription to the store and when the state in the store changes then this component will rerender.
+
+```jsx
+import { useSelector } from "react-redux";
+
+function Customer() {
+  const fullName = useSelector((store) => store.customer.fullName)
+
+  return <h2>👋 Welcome, {fullName}</h2>;
+}
+
+export default Customer;
+
+```
+
+Here we use the `useDispatch` hook to get access to the dispatch method .
+
+```jsx
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+
+import { createCustomer } from "./customerSlice";
+
+function CreateCustomer() {
+  const [fullName, setFullName] = useState("");
+  const [nationalID, setNationalID] = useState("");
+
+  const dispatch = useDispatch();
+
+  function handleClick() {
+    if(!fullName || !nationalID) return;
+    dispatch(createCustomer(fullName, nationalID))
+  }
+
+  return (
+    <div>
+      <h2>Create new customer</h2>
+      <div className="inputs">
+        <div>
+          <label>Customer full name</label>
+          <input
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>National ID</label>
+          <input
+            value={nationalID}
+            onChange={(e) => setNationalID(e.target.value)}
+          />
+        </div>
+        <button onClick={handleClick}>Create new customer</button>
+      </div>
+    </div>
+  );
+}
+
+export default CreateCustomer;
+
+```
+
+```jsx
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import { deposit, withdraw, requestLoan, payLoan } from "./accountSlice";
+import store from "../../store";
+
+function AccountOperations() {
+  const [depositAmount, setDepositAmount] = useState("");
+  const [withdrawalAmount, setWithdrawalAmount] = useState("");
+  const [loanAmount, setLoanAmount] = useState("");
+  const [loanPurpose, setLoanPurpose] = useState("");
+  const [currency, setCurrency] = useState("USD");
+
+  const dispatch = useDispatch();
+  const hasLoan = useSelector((state) => !!state.account.loan);
+
+  function handleDeposit() {
+    if (!depositAmount) return;
+    dispatch(deposit(depositAmount));
+    setDepositAmount("");
+    console.log(store.getState());
+  }
+
+  function handleWithdrawal() {
+    if (!withdrawalAmount) return;
+    dispatch(withdraw(withdrawalAmount));
+    setWithdrawalAmount("");
+    console.log(store.getState());
+  }
+
+  function handleRequestLoan() {
+    if (!loanAmount || !loanPurpose) return;
+    dispatch(requestLoan(loanAmount, loanPurpose));
+    setLoanAmount("");
+    setLoanPurpose("");
+    console.log(store.getState());
+  }
+
+  function handlePayLoan() {
+    if (!hasLoan) return;
+    dispatch(payLoan());
+    console.log(store.getState());
+  }
+
+  return (
+    <div>
+      <h2>Your account operations</h2>
+      <div className="inputs">
+        <div>
+          <label>Deposit</label>
+          <input
+            type="number"
+            value={depositAmount}
+            onChange={(e) => setDepositAmount(+e.target.value)}
+          />
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+          >
+            <option value="USD">US Dollar</option>
+            <option value="EUR">Euro</option>
+            <option value="GBP">British Pound</option>
+          </select>
+
+          <button onClick={handleDeposit}>Deposit {depositAmount}</button>
+        </div>
+
+        <div>
+          <label>Withdraw</label>
+          <input
+            type="number"
+            value={withdrawalAmount}
+            onChange={(e) => setWithdrawalAmount(+e.target.value)}
+          />
+          <button onClick={handleWithdrawal}>
+            Withdraw {withdrawalAmount}
+          </button>
+        </div>
+
+        <div>
+          <label>Request loan</label>
+          <input
+            type="number"
+            value={loanAmount}
+            onChange={(e) => setLoanAmount(+e.target.value)}
+            placeholder="Loan amount"
+          />
+          <input
+            value={loanPurpose}
+            onChange={(e) => setLoanPurpose(e.target.value)}
+            placeholder="Loan purpose"
+          />
+          <button onClick={handleRequestLoan}>Request loan</button>
+        </div>
+
+        <div>
+          <span>Pay back $X</span>
+          <button onClick={handlePayLoan}>Pay loan</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default AccountOperations;
+
+```
+
+### Redux Middleware & Thunks
+
+Where do we make async calls with Redux?
+- The store holds reducers which are pure functions without side effects, so not in the store
+- Fetching data in components and then dispatching would work but this is not ideal. We want to keep them free from data fetching
+- We want data fetching all in one place...
+- MIDDLEWARE is the answer. It will sit between the dispatched action and the store
+- This is perfect for async code (API calls, timers, logging, any side effects)
+- We CAN write ourselves, but its easier to use a 3rd party library
+- Most common one is called Thunk
+
+
+3 Steps to "Effect" middleware:
+- Install middleware
+- Apply to store
+- Use in action creator functions
+
+1. 
+`npm i redux-thunk`
+
+2. Apply to store by passing a second argument to the `createStore` function which is the `applyMiddleware` function, passing in our imported middleware
+
+```jsx
+import accountReducer from "./features/accounts/accountSlice";
+import customerReducer from "./features/customers/customerSlice";
+
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import thunk from "redux-thunk";
+
+const rootReducer = combineReducers({
+  account: accountReducer,
+  customer: customerReducer
+})
+
+const store = createStore(rootReducer, applyMiddleware(thunk));
+
+export default store;
+```
+
+Then we are going to get the currency and use it in the middleware to make an API call to convert it
+
+```jsx
+// AccountOperations.js
+function handleDeposit() {
+    if (!depositAmount) return;
+    dispatch(deposit(depositAmount, currency));
+    setDepositAmount("");
+    setCurrency("USD")
+    console.log(store.getState());
+  }
+```
+
+3. In our action creator function we make allow a regular synchronous dispatch to the store if no conversion is needed, otherewise we make the API call.
+
+We do this by RETURNING a function that gets the `dispatch` and `getState` functions from the store as arguments. We perform our API call as usual then call the `dispatch` function with our desired value to put in the store.
+
+```jsx
+export function deposit(amount, currency) {
+  if(currency === "USD") return { type: "account/deposit", payload: amount };
+
+  return async (dispatch, getState) => {
+    // API Call
+    const res = await fetch(`https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`);
+    const data = await res.json();
+    console.log(data);
+    const convertedAmount = data.rates.USD
+
+    // Dispatch action
+     dispatch({ type: "account/deposit", payload: convertedAmount })
+  }
+}
+```
+
+
+### Redux Dev Tools
+
+If not installed as an extension in chrome install them
+
+Then add to your project with:
+
+`npm i redux-devtool-extension`
+
+Then we wrap the `applyMiddleware` function with the `composeWithDevTools` function
+
+```js
+import accountReducer from "./features/accounts/accountSlice";
+import customerReducer from "./features/customers/customerSlice";
+
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import thunk from "redux-thunk";
+import { composeWithDevTools } from "redux-devtools-extension";
+
+const rootReducer = combineReducers({
+  account: accountReducer,
+  customer: customerReducer
+})
+
+const store = createStore(rootReducer, composeWithDevTools(applyMiddleware(thunk)));
+
+export default store;
+```
+
+Then we can see our actions dispatched in the Redux tab in devtools as well as the states and their updates.
+
+The best feature is that you can jump between states and see them visually, or they have a slider that can be played, or slide it between them.
+
+Additionally you can manually dispatch actions in the devtools as well
+
+### Modern Redux (Redux Tool Kit - RTK)
+
+Redux Tool Kit
+- Recommended by the Redux team
+- Forces us to use best practices
+- Can use classic redux and RTK together "IF needed"
+- Write a lot less code to achieve the same results
+
+3 Hightlights:
+- Write code that "Looks like" it mutates state inside reducers (Using a library called Immer which converts our code back to non-mutating) This allows for complex state to be easily managed
+- Automatically creates action creators from our reducers, which CAN create extra work for us in some instances
+- Automatic setup of Thunk middleware & Redux devtools
