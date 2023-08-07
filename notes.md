@@ -3245,3 +3245,122 @@ function Error() {
 
 export default Error;
 ```
+
+If we need our http functions to access parameters we can't just use the `useParams` hook because it would be used outside a component. React Router has thought of this so the loader function has a `params` property which you can destructure and access the params as defined in the router.
+
+```jsx
+// Orders.jsx
+export async function loader({params}) {
+  return await getOrder(params.orderId)
+}
+```
+
+### React Router Actions
+
+Where loaders are used to read data, actions are used to write data.
+
+Actions follow the same pattern as loaders, where you defined your action in the same component file where you want it. Then you add it to the action property of that route. Then any form submission from that route will be handled by the action. You use the `Form` component from react router and specify the method `POST, UPDATE, PATCH` but `GET` is not allowed here. The `Form` component handles a bunch of stuff under the hood whereas before we would have had to create state variables and control all the inputs as well as having a handler function that called preventDefault.
+
+The action function intercepts the request from the form submission and we get access to it. So we call the `request.formData()` to get the formData then we call the `Object.fromEntries()` function from JS to pull out our input data. At this point we can format the data as needed and perform any http requests as desired like in our `createOrder` function. This returns the new order from the api with its created id so the we can call the `redirect` method provided by react router and navigate to the newly created order.
+
+Additionally we can perform some custom validation/error handling with help of the action. We can check the phone number to make sure its formatted properly and if not we can return early with an errors object. Anything we return from the action we can access through the `useActionData` hook and then render some validation feedback as needed. 
+
+```jsx
+// App.jsx
+{
+  path: '/order/new',
+  element: <CreateOrder />,
+  action: createOrderAction
+},
+```
+
+```jsx
+// CreateOrder.jsx
+import { Form, redirect, useActionData, useNavigation } from "react-router-dom";
+import { createOrder } from "../services/apiRestaurant";
+
+// https://uibakery.io/regex-library/phone-number
+const isValidPhone = (str) =>
+  /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
+    str
+  );
+
+function CreateOrder() {
+  const cart = fakeCart;
+
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+  const formErrors = useActionData();
+
+  return (
+    <div>
+      <h2>Ready to order? Lets go!</h2>
+
+      <Form method="POST">
+        <div>
+          <label>First Name</label>
+          <input type="text" name="customer" required />
+        </div>
+
+        <div>
+          <label>Phone number</label>
+          <div>
+            <input type="tel" name="phone" required />
+          </div>
+          {formErrors?.phone && <p>{formErrors.phone}</p> }
+        </div>
+
+        <div>
+          <label>Address</label>
+          <div>
+            <input type="text" name="address" required />
+          </div>
+        </div>
+
+        <div>
+          <input
+            type="checkbox"
+            name="priority"
+            id="priority"
+          />
+          <label htmlFor="priority">Want to yo give your order priority?</label>
+        </div>
+
+        <div>
+          <input type="hidden" name="cart" value={JSON.stringify(cart)} />
+          <button disabled={isSubmitting}>
+            {isSubmitting ? "Placing Order..." : "Order Now"}
+          </button>
+        </div>
+      </Form>
+    </div>
+  );
+}
+
+export async function action({ request }) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+
+  const order = {
+    ...data,
+    cart: JSON.parse(data.cart),
+    priority: data.priority === "on",
+  };
+
+  const errors = {};
+
+  if (!isValidPhone(order.phone))
+    errors.phone =
+      "Please give us your correct phone number. We might new to contact you.";
+
+  if (Object.keys(errors).length > 0) return errors;
+
+  const newOrder = await createOrder(order);
+
+  return redirect(`/order/${newOrder.id}`);
+}
+
+export default CreateOrder;
+
+
+```
