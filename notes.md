@@ -2892,3 +2892,356 @@ Redux:
 - Not super common for UI state (Redux has started to fall out of favor)
 
 Good advice - Use whats best for your app based on your needs and make an educated decision
+
+## Professional React 
+
+## Professional Setup
+
+### Eslint Config
+
+`npm i eslint vite-plugin-eslint eslint-config-react-app ---save-dev`
+
+We need to the eslint config for react we just installed extend eslint
+
+```json
+//  .eslintrc.json
+{
+  "extends": "react-app"
+}
+```
+
+And also add the eslint plugin to the plugin array
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import eslint from 'vite-plugin-eslint'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react(), eslint],
+})
+
+```
+
+AND... for whatever reason, I need to add an empty `jsconfig.json` at the top level to make a shit ton of react errors go away??????
+
+### Application Planning
+
+#### For smaller apps
+1. Break desired UI in components
+2. Build the static version (no state)
+3. Think about state MGMT & data flow
+
+#### For larger real world apps
+1. Gather application requirements & features
+2. Divide the app into pages
+  - Think about overall and page level UI
+  - Break UI into components
+  - Design and build static version
+3. Divide the app into feature categories
+  - For each feature category think about state MGMT & data flow
+4. Tech decisions (libraries)
+
+#### App Requirements
+- Simple app to order one or more pizzas from a menu
+- No login required
+- Pizza menu can change (should be loaded from an API)
+- Users can add pizzas to a cart
+- Ordering requires name, phone number and address
+- GPS should be provided to make delivery easier
+- Users can mark orders as priority which adds 20% to the total cart price
+- Orders made by sending a POST to the API
+- No payment processing, paid upon delivery
+- Each placed order gets a unique ID so users can look up order status
+- Users can mark order as priority even AFTER an order has been placed
+
+#### Features & Pages
+
+Feature Categories
+1. User
+2. Menu
+3. Cart
+4. Order
+
+Pages
+1. Home Page `/` 
+2. Pizza Menu `/menu`
+3. Pizza Cart `/cart`
+4. Placing New Order `/order/new`
+5. Looking Up An Order `/order/:id`
+
+#### State MGMT
+Feature categories usually map well to state slices
+
+1. User -> Global UI (No accounts so stays in app)
+2. Menu -> Global Remote (Menu fetched from API)
+3. Cart -> Global UI (No need for an API, stored in app)
+4. Order -> Global Remote (fetched & submitted to API)
+
+Technology Decisions (Stack):
+Routing -> React Router
+Styling -> Tailwind
+Remote State -> React Router
+UI State -> Redux
+
+### File Structure
+
+Feature based structures are nice for bigger projects.
+
+- features
+  - cart
+  - menu
+  - order
+  - services
+  - ui
+  - user
+  - utils
+
+We could also add other folders with things like contexts, hooks or even pages. The desired outcome of this folder structure is to prevent a structure that is broken up into way topo many small sections that it becomes really confusing to navigate the code base
+
+## React Router With Data Loading
+
+### React Router v6.4
+
+With the new version of React Router, if we want to access the new powerful APIs like loaders, data fetching etc. we need to use a bit different syntax(Sort of looks like angular). We use the `createBrowserRouter` function to define an array of route objects. Then we pass the returned value of that function (`router`) as a prop to the `RouterProvider`
+
+Create a sort of shell, we can create a parent route that takes no path property (So it gets rendered no matter what, in react router these are called 'Layout Routes') Then we add the children property and any child path will render the corresponding component. Keep in mind you have to use the `Outlet` component from `react-router-dom` to tell react where to render the children
+
+```jsx
+import { RouterProvider, createBrowserRouter } from "react-router-dom"
+import Home from "./features/ui/Home"
+import Menu from "./features/menu/Menu"
+import Cart from "./features/cart/Cart"
+import CreateOrder from "./features/order/CreateOrder"
+import Order from "./features/order/Order"
+
+const router = createBrowserRouter([
+  {
+    element: <AppLayout />,
+    children:  [{
+      path: '/',
+      element: <Home />
+    },
+    {
+      path: '/menu',
+      element: <Menu />
+    },
+    {
+      path: '/cart',
+      element: <Cart/>
+    },
+    {
+      path: '/order/new',
+      element: <CreateOrder />
+    },
+    {
+      path: '/order/:id',
+      element: <Order />
+    }]
+  },
+  
+])
+
+
+function App() {
+  return (
+    <RouterProvider router={router}>
+
+    </RouterProvider>
+  )
+}
+
+export default App
+
+```
+
+```jsx
+// AppLayout.jsx
+import { Outlet } from "react-router-dom"
+
+import Header from "./Header"
+import CartOverview from "../cart/CartOverview"
+
+function AppLayout() {
+  return (
+    <div>
+      <Header />
+
+      <main>
+        <Outlet />
+      </main>
+
+      <CartOverview />
+    </div>
+  )
+}
+
+export default AppLayout
+
+```
+
+### Fetching Data - Loaders
+
+1. Create Loader
+2. Provide Loader
+3. Provide data to the page
+
+Can be placed anywhere but convention is to place it in the file of that page.
+
+
+We have a file in our services related to all our data fetching functions for a part of the app
+```js
+// apiRestaurant.js
+const API_URL = 'https://react-fast-pizza-api.onrender.com/api';
+
+export async function getMenu() {
+  const res = await fetch(`${API_URL}/menu`);
+
+  // fetch won't throw error on 400 errors (e.g. when URL is wrong), so we need to do it manually. This will then go into the catch block, where the message is set
+  if (!res.ok) throw Error('Failed getting menu');
+
+  const { data } = await res.json();
+  return data;
+}
+```
+
+Then we create our loader inside the file where we need it then export it. Then we import the loader and provide it for the component we want in `App.jsx` and then we can get the value from `useLoaderData` and react router then knows what loader we passed in. This way instead of using an effect to wait for the component to mount and have an initial render, the data is being fetched at the same time the data is being rendered.
+
+```jsx
+// Menu.jsx
+import { useLoaderData } from "react-router-dom";
+import { getMenu } from "../services/apiRestaurant";
+import MenuItem from "./MenuItem";
+
+function Menu() {
+  const menu = useLoaderData();
+
+  console.log(menu);
+
+  return (
+    <ul>
+      {
+        menu.map(zah => <MenuItem key={zah.id} pizza={zah}/>)
+      }
+    </ul>
+  );
+}
+
+export async function loader() {
+  return await getMenu();
+}
+
+export default Menu;
+
+```
+
+```jsx
+// App.js
+import { loader as menuLoader } from "./features/menu/Menu"
+
+const router = createBrowserRouter([
+  {
+    element: <AppLayout />,
+    children:  [
+      {
+      path: '/',
+      element: <Home />
+      },
+      {
+        path: '/menu',
+        element: <Menu />,
+        loader: menuLoader,
+      },
+      etc...
+    ]
+}
+])
+```
+
+### Loading States
+
+React Router now provides a `useNavigation` hook that will update a global state if any of the components are loading, idle or submitting. So we can use this in our top level layout component to display a loading animation.
+
+```jsx
+import { Outlet, useNavigation } from "react-router-dom";
+
+import Header from "./Header";
+import CartOverview from "../cart/CartOverview";
+import Loading from "./Loading";
+
+function AppLayout() {
+  const navigation = useNavigation();
+  const isLoading = navigation.state === 'loading'
+  console.log(navigation);
+  // formAction: undefined
+  // formData: undefined
+  // formEncType: undefined
+  // formMethod: undefined
+  // json: undefined
+  // location: {pathname: '/menu', search: '', hash: '', state: null, key: 'mgcjhsqx'}
+  // state: "loading"
+  // text: undefined
+  return (
+    <div className="layout">
+      {isLoading && <Loading />}
+
+      <Header />
+
+      <main>
+        <Outlet />
+      </main>
+
+      <CartOverview />
+    </div>
+  );
+}
+
+export default AppLayout;
+
+```
+
+### Errors
+
+React router now provides an `errorElement` property where we can pass an element to be shown if an error occurs. Any error that occurs, whether it be due to a component rendering, or due to failed http request, the error will bubble up until it hits a route where the `errorElement` is defined to be handled. In the error component we can then use the `useRouteError` hook to get the error info and display it. Here we handle the instance of a fetch request going wrong in the menu component. as well as at the  `AppLayout` level if navigating to an unknown route for ex.) `/sdfgdsfghfg`. The router automatically displays a nicely formatted message based on the `error.data` or `error.message`.
+
+```jsx
+const router = createBrowserRouter([
+  {
+    element: <AppLayout />,
+    errorElement: <Error/>,
+    children:  [{
+      path: '/',
+      element: <Home />
+    },
+    {
+      path: '/menu',
+      errorElement: <Error/>,
+      element: <Menu />,
+      loader: menuLoader,
+    }]
+  }
+])  
+```
+
+```jsx
+// Error.jsx
+import { useNavigate, useRouteError } from 'react-router-dom';
+
+function Error() {
+  const navigate = useNavigate();
+  const error = useRouteError();
+  console.log(error);
+
+  return (
+    <div>
+      <h1>Something went wrong 😢</h1>
+      <p>{error.data || error.message}</p>
+      <button onClick={() => navigate(-1)}>&larr; Go back</button>
+    </div>
+  );
+}
+
+export default Error;
+```
