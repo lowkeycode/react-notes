@@ -1768,7 +1768,7 @@ If we have an object or function created inside a component and that component r
 
 useCallback Example:
 
-In the app when the `city:id` route is rendered from clicking on a city in the city list the id is updated in the url and the city component mounts. When the id changes the useEffect dependent on that id will run and call `getCity(id)`. We can see in the context that getCity updates the state, causing a rerender of the provider, which will cause a rerender of the city component, which will call `getCity` AGAIN resulting in another state update and an infinite loop.
+In the app when the `city:id` route is rendered from clicking on a city in the city list the id is updated in the url and the city component mounts. When the id changes the useEffect dependent on that id will run and call `getCity(id)`. We can see in the context that getCity updates the state, causing a rerender of the provider, this causes the getCity function to be recreated. Then because the effect has the getCity function in it's dependency array it will be called again, which will update the state causing a rerender of the provider recreating the getCity function again, resulting in an infinite loop.
 
 the solver as shown below is to use `useCallback` to memoize the function to prevent the value from being recalculated if the input has not changed, solving our problem and preventing the infinite loop.
 
@@ -3362,5 +3362,95 @@ export async function action({ request }) {
 
 export default CreateOrder;
 
+```
+
+## Redux w/ Advanced React Router
+
+Redux Selectors:
+
+A common pattern for accessing DERIVED state from the store instead of calculating it again and again at the component level, is to make reusable selectors that are in the slice. This can come at a performance cost in larger app, so there are patterns, libraries to look into that help with this if need be.
+
+**NOTE**
+Selectors that do not require any argument to be passed in will only need the function definition passed to the `useSelector` hook when being called. If a selector does require arguments then, when defining the function you will NEED TO USE CURRYING Ex.) `getQuantityById`. Then you can call the selector with the parameter. See below for examples.
+
+```jsx
+// cartSlice.js
+import { createSlice } from '@reduxjs/toolkit';
+
+const initialState = {
+  cart: [],
+};
+
+const cartSlice = createSlice({
+  name: 'cart',
+  initialState,
+  reducers: {
+    addItem(state, action) {
+      state.cart = [...state.cart, action.payload];
+    },
+    deleteItem(state, action) {
+      state.cart = state.cart.filter(
+        (pizza) => pizza.id !== action.payload
+      );
+    },
+    increaseItemQty(state, action) {
+      const pizza = state.cart.find(
+        (pizza) => pizza.id === action.payload
+      );
+      pizza.quantity++;
+      pizza.totalPrice = pizza.quantity * pizza.unitPrice;
+    },
+    decreaseItemQty(state, action) {
+      const pizza = state.cart.find(
+        (pizza) => pizza.id === action.payload
+      );
+      pizza.quantity--;
+      pizza.totalPrice = pizza.quantity * pizza.unitPrice;
+    },
+    clearCart(state) {
+      state.cart = [];
+    },
+  },
+});
+
+export const {
+  addItem,
+  deleteItem,
+  increaseItemQty,
+  decreaseItemQty,
+  clearCart,
+} = cartSlice.actions;
+
+export default cartSlice.reducer;
+
+export const getCart = (state) => state.cart.cart;
+
+export const getTotalCartQuantity = (state) =>
+  state.cart.cart.reduce((acc, cur) => acc + cur.quantity, 0);
+
+
+//  ======== NOTE FROM ABOVE ========
+
+
+export const getTotalCartPrice = (state) =>
+  state.cart.cart.reduce((acc, cur) => acc + cur.unitPrice, 0);
+
+export const getQuantityById = (id) => (state) =>
+  state.cart.cart.find((item) => item.id === id)?.quantity ?? 0;
 
 ```
+
+```jsx
+// MenuItem.jsc
+function MenuItem({ pizza }) {
+  const { id, name, unitPrice, ingredients, soldOut, imageUrl } = pizza;
+
+  const dispatch = useDispatch();
+  const currentQuantity = useSelector(getQuantityById(id));
+
+  const isInCart = currentQuantity > 0;
+
+  etc...
+}
+```
+
