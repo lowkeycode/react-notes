@@ -3611,3 +3611,141 @@ const Heading = styled.h1`
 export default Heading;
 
 ```
+
+### Making Reusable Components
+
+We can see in the `Row` component we access the props and decide how to style based on what is passed in. We also give it a default propType so we don't have to define the prop if we just want the default styling.
+
+In the `Button` component we do the same thing but then take it a bit further with JS in the template literals with props. We can define our different variants for sizes/variations in their own objects with each key containing its unique styling. Then when accepting the props we can us object index access to determine programmatically what style should be applied.
+
+
+```jsx
+function App() {
+  return (
+    <>
+      <GlobalStyles />
+      <StyledApp>
+        <Row>
+          <Row type="horizontal">
+            <Heading as="h1">The Wild Oasis</Heading>
+            <div>
+              <Heading as="h2">Check in and out</Heading>
+
+              <Button>
+                Check In
+              </Button>
+              <Button variation="secondary" size="small">Check Out</Button>
+            </div>
+          </Row>
+
+          <Row>
+            <Heading as="h3">Form</Heading>
+            <form>
+              <Input type="number" placeholder="Number of guests"></Input>
+              <Input type="number" placeholder="Number of guests"></Input>
+            </form>
+          </Row>
+        </Row>
+      </StyledApp>
+    </>
+  );
+}
+```
+
+
+```jsx
+import styled, { css } from "styled-components";
+
+const Row = styled.div`
+  display: flex;
+
+  ${(props) =>
+    props.type === "horizontal" &&
+    css`
+      justify-content: space-between;
+      align-items: center;
+    `}
+
+  ${(props) =>
+    props.type === "vertical" &&
+    css`
+      flex-direction: column;
+      gap: 1.6rem;
+    `}
+`;
+
+Row.defaultProps = {
+  type: 'vertical'
+}
+
+export default Row;
+
+```
+
+```jsx
+import styled, { css } from "styled-components";
+
+const sizes = {
+  small: css`
+    font-size: 1.2rem;
+    padding: 0.4rem 0.8rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    text-align: center;
+  `,
+  medium: css`
+    font-size: 1.4rem;
+    padding: 1.2rem 1.6rem;
+    font-weight: 500;
+  `,
+  large: css`
+    font-size: 1.6rem;
+    padding: 1.2rem 2.4rem;
+    font-weight: 500;
+  `,
+};
+
+const variations = {
+  primary: css`
+    color: var(--color-brand-50);
+    background-color: var(--color-brand-600);
+
+    &:hover {
+      background-color: var(--color-brand-700);
+    }
+  `,
+  secondary: css`
+    color: var(--color-grey-600);
+    background: var(--color-grey-0);
+    border: 1px solid var(--color-grey-200);
+
+    &:hover {
+      background-color: var(--color-grey-50);
+    }
+  `,
+  danger: css`
+    color: var(--color-red-100);
+    background-color: var(--color-red-700);
+
+    &:hover {
+      background-color: var(--color-red-800);
+    }
+  `,
+};
+
+const Button = styled.button`
+  border: none;
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-sm);
+
+  ${props => sizes[props.size]}
+  ${props => variations[props.variation]}
+`;
+
+Button.defaultProps = {
+  variation: 'primary',
+  size: 'medium'
+}
+
+export default Button;
+```
