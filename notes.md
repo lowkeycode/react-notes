@@ -3510,3 +3510,45 @@ function App() {
 export default App
 
 ```
+
+
+### Global Styles
+
+For global styles we can put a `globalstyles.js` in our styles folder and export a styled component just like any other it with all our css inside the template literals, including all valid css such as css variables defined with `:root`. 
+
+Then to use it we need to make it a self closing sibling of the app.
+
+```jsx
+function App() {
+  return (
+    <>
+      <GlobalStyles />
+      <StyledApp>
+        <H1>Ohhhhhh buddy</H1>
+
+        <Button onClick={() => alert(`Feckin hell`)}>Check In</Button>
+        <Button onClick={() => alert(`Feckin hell`)}>Check Out</Button>
+
+        <Input type="number" placeholder="Number of guests"></Input>
+      </StyledApp>
+    </>
+  );
+}
+```
+
+Additionally its convention to extract the styled components into their own folders. You can if you'd like keep some local styled components. Ex.) `StyledApp` or `H1` as seen above could just stay instead of extracting to their own files, because they aren't really going to be reused.
+
+```jsx
+// ./ui/Input.jsx
+import styled from "styled-components";
+
+const Input = styled.input`
+  border: 1px solid var(--color-grey-300);
+  background-color: var(--color-grey-0);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: 0.8rem 1.2rem;
+`;
+
+export default Input;
+```
