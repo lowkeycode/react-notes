@@ -3536,7 +3536,7 @@ function App() {
 }
 ```
 
-Additionally its convention to extract the styled components into their own folders. You can if you'd like keep some local styled components. Ex.) `StyledApp` or `H1` as seen above could just stay instead of extracting to their own files, because they aren't really going to be reused.
+Additionally its convention to extract the styled components into their own folders. You can if you'd like keep some local styled components. Ex.) `StyledApp` as seen above could just stay instead of extracting to their own files, because they aren't really going to be reused.
 
 ```jsx
 // ./ui/Input.jsx
@@ -3551,4 +3551,63 @@ const Input = styled.input`
 `;
 
 export default Input;
+```
+
+### Styled Component Props & css function
+
+We can pass custom defined props to our styled components. Then in our components since we are just technically using template literals, we can also use JS `${}` in them. This allows us to create reusable components with styling logic. Below the commented out `type` prop we defined could be used to determine styling, but all components when rendered would ALL be `h1`'s. This is bad for SEO and accessibility, so the library has a solve foe this using the `as` prop that we pass in with the element type and then will render the correct html element in the DOM.
+
+Additionally, the library supplies a `css` helper for template literals. It is designed to be used for when calling functions in template literals....but here we use it to just get access to css syntax highlighting.
+
+```jsx
+function App() {
+  return (
+    <>
+      <GlobalStyles />
+      <StyledApp>
+        <Heading as='h1'>The Wild Oasis</Heading>
+        {/* <Heading type='h1'>The Wild Oasis</Heading> */}
+        <Heading as='h2'>Check in and out</Heading>
+
+        <Button onClick={() => alert(`Feckin hell`)}>Check In</Button>
+        <Button onClick={() => alert(`Feckin hell`)}>Check Out</Button>
+
+        <Heading as='h3'>Form</Heading>
+        <Input type="number" placeholder="Number of guests"></Input>
+      </StyledApp>
+    </>
+  );
+}
+```
+
+
+```jsx
+import styled, { css } from "styled-components";
+
+const Heading = styled.h1`
+  ${props => props.as === 'h1' && css`
+  font-size: 3rem;
+  font-weight: 600;
+  `}
+
+  // ${props => props.type === 'h2' && css`
+  // font-size: 2rem;
+  // font-weight: 600;
+  // `}
+
+  ${props => props.as === 'h2' && css`
+  font-size: 2rem;
+  font-weight: 600;
+  `}
+
+  ${props => props.as === 'h3' && css`
+  font-size: 1rem;
+  font-weight: 500;
+  `}
+  
+  line-height: 1.4;
+`;
+
+export default Heading;
+
 ```
