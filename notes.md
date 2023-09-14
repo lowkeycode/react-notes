@@ -3454,3 +3454,59 @@ function MenuItem({ pizza }) {
 }
 ```
 
+## Styled Components
+
+### Crash Course/Basics
+
+Styled components actually just leverage an uncommon feature of ES6 called [tagged template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals). This allows for the template literal to be passed to a function which is the `styled.{htmlElement}` function. To use them we declare a const variable uppercased because they are going to be components. Then we use the `styled.` function with the type of html element appended. Then immediately following we use template literals and define our css as per usual. Under the hood styled components will ensure these styles are specifically scoped to that exact component with a unique class name. The components can then be used in our render logic and have the ability of regular components with all expected event handlers built in. To styled the top level functional component Ex.) `App` We create a styled component with convention being `Styled` + `ComponentName` and use a `styled.div` at the top level. 
+
+
+```jsx
+import styled from "styled-components"
+
+const H1 = styled.h1`
+  font-size: 30px;
+  font-weight: 600;
+  background-color: yellow;
+`
+
+const Button = styled.button`
+  font-size: 1.4rem;
+  padding: 1.2rem 1.6rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 7px;
+  background-color: purple;
+  color: white;
+  cursor: pointer;
+  margin: 20px;
+`
+
+const Input = styled.input`
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: .8rem 1.2rem; 
+`
+
+const StyledApp = styled.div`
+  background-color: orangered;
+  padding: 20px;
+
+`
+
+function App() {
+  return (
+    <StyledApp>
+      <H1>Ohhhhhh buddy</H1>
+
+      <Button onClick={() => alert(`Feckin hell`)}>Check In</Button>
+      <Button onClick={() => alert(`Feckin hell`)}>Check Out</Button>
+
+      <Input type='number' placeholder='Number of guests'></Input>
+    </StyledApp>
+  )
+}
+
+export default App
+
+```
