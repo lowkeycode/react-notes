@@ -3749,3 +3749,11 @@ Button.defaultProps = {
 
 export default Button;
 ```
+
+## Supabase
+
+Supabase uses Postgres DB whic is and SQL (relational) DB. It automatically deals with handling our backend db, api hosting etc. Similar to firebase. Then we just define our db structure (with tables because its relational) and then interact with its API.
+
+The docs are very easy to use and GUI is very intuitive. RTFM.
+
+## React Query
