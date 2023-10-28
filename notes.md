@@ -3757,3 +3757,139 @@ Supabase uses Postgres DB whic is and SQL (relational) DB. It automatically deal
 The docs are very easy to use and GUI is very intuitive. RTFM.
 
 ## React Query
+
+### Overview
+
+- A library for managing remote state
+- Allow us to write less code and improve the UI by:
+  - Having data stored in a cache
+  - Automatic loading and error states
+  - Automatic refectching
+  - Pre-fetching
+  - Easy remote state mutation
+  - Offline support
+- A library like this is needed because remote state is fundamentally different from UI state
+  - With many users, remote state can get out of sync with a given users UI state
+
+
+### Data Fetching/Mutations
+We install react query with npm. Then in our app component we ned to create a provider that contains some defualt options. The stale option here is how fast the cache is invalidated. RTFM. Then we wrap the entire app in the QueryClientProvider passing the client prop our defined queryClient.
+
+```jsx
+// App.jsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // stale: 60 * 1000,
+      stale: 0,
+    },
+  },
+});
+
+function App() {
+  return (
+    <>
+      <QueryClientProvider client={queryClient}>
+        <ReactQueryDevtools initialIsOpen={false} />
+        <GlobalStyles />
+        etc...
+    </>
+  )
+}
+```
+
+To use queries we use the `useQuery` hook which has a ton of properties we can access and destructure. *Log them out if you need to see or...RTFM*. We pass it an object defining a queryKey that we will use for that specific table. Then we pass it a query function which we define in our apiCabin.js and import. This will run on load getting us our cabins which we then map over.
+
+```jsx
+// CabinTable.jsx
+function CabinTable() {
+  const { isLoading, data: cabins }= useQuery({
+    queryKey: ['cabins'],
+    queryFn: getCabins
+  })
+
+  if(isLoading) return <Spinner />
+
+  return (
+    <Table role="table">
+      <TableHeader role="row">
+        <div>img</div>
+        <div>Cabin</div>
+        <div>Capactity</div>
+        <div>Price</div>
+        <div>Discount</div>
+        <div> </div>
+      </TableHeader>
+      {cabins.map(cabin => <CabinRow cabin={cabin} key={cabin.id}/>)}
+    </Table>
+  )
+}
+
+export default CabinTable
+```
+
+We can copy and paste the SQL queries directly from supabase.
+
+```jsx
+// apiCabins.js
+import supabase from "./supabase";
+
+export async function getCabins() {
+  const { data, error } = await supabase.from("cabins").select("*");
+
+  if (error) {
+    console.error("Cabins could not be loaded");
+    throw new Error("Cabins could not be loaded");
+  }
+
+  return data;
+}
+
+export async function deleteCabin(id) {
+  const { error } = await supabase
+    .from("cabins")
+    .delete()
+    .eq("id", id);
+
+    if (error) {
+      console.error("Cabins could not be deleted");
+      throw new Error("Cabins could not be deleted");
+    }
+}
+```
+
+Then to mutate data we use the `useQueryClient` hook and store it in a variable. This will give us some fine grain control over react query. We use the useMutation hook which takes a mutation function that is defined and import from apiCabins.js. Then we can defined what happens on success or error of that function. We use a 3rd party library to throw some toasts. But mainly we use our defined queryClient to invalidate the cache at a specific queryKey that we defined previously in `CabinTable.jsx`. This ensures updates are instant even across multiple users on the same app. We can see this by duplicating the browser tab and deleting an item on one tab and switching over and it has been deleted on the other tab.
+
+```jsx
+// CabinRow.jsx
+function CabinRow({ cabin }) {
+  const { name, maxCapacity, regularPrice, discount, image, id: cabinId } = cabin;
+
+  const queryClient = useQueryClient();
+
+  const {isLoading: isDeleting, mutate} = useMutation({
+    mutationFn: deleteCabin,
+    onSuccess: () => {
+      toast.success('Cabin successfully deleted')
+
+      queryClient.invalidateQueries({
+        queryKey: ['cabins']
+      });
+    },
+    onError: err => toast.error(err.message)
+  })
+
+  return (
+    <TableRow role="row">
+      <Img src={image}/>
+      <Cabin>{name}</Cabin>
+      <div>Fits up to {maxCapacity} guests</div>
+      <Price>{formatCurrency(regularPrice)}</Price>
+      <Discount>{formatCurrency(discount)}</Discount>
+      <button disabled={isDeleting} onClick={() => mutate(cabinId)}>Delete</button>      
+    </TableRow>
+  )
+}
+
+export default CabinRow
+```
