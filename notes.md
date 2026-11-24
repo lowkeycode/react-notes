@@ -126,19 +126,19 @@ Props:
 
 In React for event handlers we need to pass a function definition to be called when the event occurs NOT a function call
 
-
 State:
+
 - Data that a component holds over time
 - Updating state causes a component to rerender
 
 useState hook:
+
 - Returns an array of a state variable and a state updater function
 - Hooks can only be called at the top level of a component & not inside statements (if/else)
 - State should only be updated using the updater function
 - If we want to overwrite state, pass the value directly to the state updater
 - If we want to update state based on the previous state use the anonymous callback that allows access to the previous state
 - Updating state rerenders the component
- 
 
 ```jsx
 function Steps() {
@@ -211,6 +211,7 @@ function Steps() {
 By default input fields in the DOM maintain their own state, so react needs a way to overcome this. This is why we need to "Control" input elements.
 
 Controlling state is done in 3 steps:
+
 1. Create a piece of state
 2. We specify the value attribute on the input we want to control and set it to that state
 3. Then we need to connect the two by passing a callback to the onChange event that uses the state updating function
@@ -260,8 +261,8 @@ export default function Form({ onAddItems }) {
     </form>
   );
 }
-
 ```
+
 ## State MGMT Intro
 
 - Always start with local state, then as needed move to global state (Context, Redux)
@@ -269,6 +270,7 @@ export default function Form({ onAddItems }) {
 - We can also derive state, which is preferred if possible to prevent using too much state & causing unnecessary rerenders
 
 We can implement features like SORTING from derived state
+
 ```jsx
 import { useState } from "react";
 import Item from "./Item";
@@ -319,7 +321,6 @@ export default function PackingList({
     </div>
   );
 }
-
 ```
 
 ## Components, Composition & Reusability
@@ -360,41 +361,49 @@ export default function App() {
 ### Components, Instances & Elements
 
 Component:
+
 - Function that re turns a react elements tree (JSX)
 - Blueprints
 
 Instance:
+
 - When we use the component
 - Each instance gets its own separate state, props and lifecycle
 
 Element:
+
 - All elements from the JSX are converted to `React.createElement` calls
 - These come together in a big object called the VDOM(Virtual DOM or more accurately "React Element Tree")
-
 
 ### Rendering
 
 1. Render is triggered
+
 - Either on initial render
 - Or rerender by a state update
 
 2. Render Phase
+
 - Component functions are called & react figures out HOW to update the DOM
 - This only happens internally inside react (Not the traditional term of render)
 
 3. Commit Phase
+
 - React writes to the DOM, inserting, updating and deleting elements
 
 4. Browser Paint
+
 - This is outside of React at this point but this is the final step that produces the visual change that users see
 
 #### Render Triggers
 
 Only 2 ways:
+
 - Initial render
 - State update in on or more components (rerender)
 
-*Render process is always triggered for the whole application* (React looks at the entire tree)
+_Render process is always triggered for the whole application_ (React looks at the entire tree)
+
 - Renders are scheduled when the JS engine has time
 
 #### Render Phase
@@ -402,10 +411,12 @@ Only 2 ways:
 - React goes through the ENTIRE component tree to see which components triggered a render and call those component functions which results in a new VDOM (React Element Tree)
 
 Initial Render:
+
 - React calls all components to create a VDOM (React Element Tree)
 - Actually just a POJO (Plain old javascript object)
 
 Rerenders:
+
 - State update happens
 - React goes through tree and calls components that triggered a render (state update)
 - ALL CHILDREN OF THAT COMPONENT ARE RERENDERED no matter what
@@ -413,6 +424,7 @@ Rerenders:
 - The new VDOM is then reconciled & diffed against the FIBER TREE as it existed before the state update inside Reacts reconciler called "Fiber" hence the name "Fiber Tree", resulting in a new updated "Fiber Tree" and is then used to write to the DOM
 
 Reconciliation:
+
 - Writing to the DOM is slow and thats why React does this reconciliation against the VDOM because its cheaper and usually only certain parts need updates/creation/deletion
 - Result of this is a list of operations to perform on the DOM with the new state
 - "Fiber" is the engine of React
@@ -426,43 +438,52 @@ Reconciliation:
 - List of DOM updates is created
 
 Commit Phase:
+
 - React writes to the DOM ("Flushes" to the DOM)
 - Committing is synchronous (DOM updated in one go and cant be interrupted to ensure no impartial results)
 - Work in progress fiber tree becomes the current fiber tree for the next cycle
-- Done by the web host `react-dom` 
+- Done by the web host `react-dom`
 - This is what makes react cross platform as the commit phase is done by different "hosts"
 
 Browser Paint:
+
 - Done by whatever browser the user is using
 
 ### Diffing
 
 2 Assumptions:
+
 1. 2 elements of different types will produce different trees
 2. Elements with a stable key will stay the same across renders
 
 Only 2 different scenarios:
+
 - Same position DIFFERENT element
 - Same position SAME element
 
 1. Same position DIFFERENT element (DOM or React element)
+
 - Entire subtree including state considered invalid and removed
 - This means child state might be completely reset
 
 2. Same position SAME element (DOM or React element)
+
 - Element & children and state is kept
 - New props/attributes are passed if the changed between renders and again element and children are kept
 - If we want to keep state, we can use the key prop to differentiate unique elements of the same type
 - If we want to clear out state, we can use the key prop and change it
 
 ### Render Logic
+
 There is:
+
 - Render logic (State and things that produce JSX)
 - Event handlers
 
 Components are pure functions, so given the same input (props) will produce the same output (JSX)
 
 Rules for render logic:
+
 - No side effects
 - Dont perform network requests
 - Dont start timers
@@ -470,19 +491,18 @@ Rules for render logic:
 - Dont mutate objects or variables outside function scope
 - Dont update state or refs (This causes infinite loops)
 
-
 Side effects should be done with:
+
 - Event handlers (default strategy)
 - Effects
 
-*Side Note*
+_Side Note_
 State in event handler functions are batched and asynchronous. This is where using set state with the callback accessing the previous state is helpful.
 We can see this happen if we console log a state we just updated, we get the old value.
 
 ### React Events
 
-React uses event delegation automatically for us on the root element. 
-
+React uses event delegation automatically for us on the root element.
 
 ## Effects & Data Fetching
 
@@ -630,7 +650,7 @@ export function useMovies(query, callback) {
         setIsLoading(() => true);
         const res = await fetch(
           `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-          { signal: controller.signal }
+          { signal: controller.signal },
         );
 
         if (!res.ok) {
@@ -918,10 +938,8 @@ function Sidebar() {
     <div className={styles.sidebar}>
       <Logo />
       <AppNav />
-
       // OUTLET HERE
       <Outlet />
-
       <footer className={styles.footer}>
         <p className={styles.copyright}>
           &copy; Copyright {new Date().getFullYear()} by WorldWise Inc.
@@ -1188,7 +1206,7 @@ const PostContext = createContext();
 
 function PostProvider({ children }) {
   const [posts, setPosts] = useState(() =>
-    Array.from({ length: 30 }, () => createRandomPost())
+    Array.from({ length: 30 }, () => createRandomPost()),
   );
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -1198,7 +1216,7 @@ function PostProvider({ children }) {
       ? posts.filter((post) =>
           `${post.title} ${post.body}`
             .toLowerCase()
-            .includes(searchQuery.toLowerCase())
+            .includes(searchQuery.toLowerCase()),
         )
       : posts;
 
@@ -1822,7 +1840,7 @@ const getCity = useCallback(
       dispatch({ type: "ERROR", payload: error.message });
     }
   },
-  [currentCity.id]
+  [currentCity.id],
 );
 ```
 
@@ -2014,15 +2032,14 @@ Effects should be used as a last resort, when no other solution makes sense. The
 
 - Creates multiple rerenders which is problematic (Use derived state/event handlers instead)
 
-
 ### State Updates Based On Other State
 
 This is usually not desirable but the alternative is putting the repeated calculations across multiple setState functions. The issue here is that when one of the dependencies is updated it causes a rerender, which also causes the effect to run, which ALSO causes a second render. So this usually is avoided when possible.
 
 ```jsx
 useEffect(() => {
-    setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak)
-  }, [number, sets, speed, durationBreak])
+  setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
+}, [number, sets, speed, durationBreak]);
 ```
 
 ### Helper Functions In Effects
@@ -2032,17 +2049,20 @@ When we use helper functions inside a useEffect, we need to add it to the depend
 If we walk through the possible solves...
 
 We could move it outside the component:
+
 - Wouldn't work because its a reactive value and depends on other state from props
 
-We could move in inside the effect: 
+We could move in inside the effect:
+
 - Wouldn't work because then we would lose scope of it and couldn't use it inside our event handlers
 
 We could memoize it:
+
 - This also breaks down quickly as described below
 
 ```jsx
-import { memo, useEffect, useState } from 'react';
-import clickSound from './ClickSound.m4a';
+import { memo, useEffect, useState } from "react";
+import clickSound from "./ClickSound.m4a";
 
 function Calculator({ workouts, allowSound }) {
   const [number, setNumber] = useState(workouts.at(0).numExercises);
@@ -2050,7 +2070,7 @@ function Calculator({ workouts, allowSound }) {
   const [speed, setSpeed] = useState(90);
   const [durationBreak, setDurationBreak] = useState(5);
 
-  const [duration, setDuration] = useState(0)
+  const [duration, setDuration] = useState(0);
   // const duration = (number * sets * speed) / 60 + (sets - 1) * durationBreak;
 
   const playSound = function () {
@@ -2062,18 +2082,17 @@ function Calculator({ workouts, allowSound }) {
   useEffect(() => {
     setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
     playSound();
-  }, [number, sets, speed, durationBreak, playSound])
+  }, [number, sets, speed, durationBreak, playSound]);
 
   function handleInc() {
-    setDuration(dur => Math.floor(dur) + 1);
+    setDuration((dur) => Math.floor(dur) + 1);
     playSound();
   }
 
   function handleDec() {
-    setDuration(dur => dur > 1 ? Math.floor(dur) - 1 : 0)
+    setDuration((dur) => (dur > 1 ? Math.floor(dur) - 1 : 0));
     playSound();
   }
-
 
   const mins = Math.floor(duration);
   const seconds = (duration - mins) * 60;
@@ -2094,9 +2113,9 @@ function Calculator({ workouts, allowSound }) {
         <div>
           <label>How many sets?</label>
           <input
-            type='range'
-            min='1'
-            max='5'
+            type="range"
+            min="1"
+            max="5"
             value={sets}
             onChange={(e) => setSets(e.target.value)}
           />
@@ -2105,10 +2124,10 @@ function Calculator({ workouts, allowSound }) {
         <div>
           <label>How fast are you?</label>
           <input
-            type='range'
-            min='30'
-            max='180'
-            step='30'
+            type="range"
+            min="30"
+            max="180"
+            step="30"
             value={speed}
             onChange={(e) => setSpeed(e.target.value)}
           />
@@ -2117,9 +2136,9 @@ function Calculator({ workouts, allowSound }) {
         <div>
           <label>Break length</label>
           <input
-            type='range'
-            min='1'
-            max='10'
+            type="range"
+            min="1"
+            max="10"
             value={durationBreak}
             onChange={(e) => setDurationBreak(e.target.value)}
           />
@@ -2129,8 +2148,8 @@ function Calculator({ workouts, allowSound }) {
       <section>
         <button onClick={handleDec}>–</button>
         <p>
-          {mins < 10 && '0'}
-          {mins}:{seconds < 10 && '0'}
+          {mins < 10 && "0"}
+          {mins}:{seconds < 10 && "0"}
           {seconds}
         </p>
         <button onClick={handleInc}>+</button>
@@ -2140,31 +2159,29 @@ function Calculator({ workouts, allowSound }) {
 }
 
 export default memo(Calculator);
-
 ```
 
 Memoized:
 
 This however creates a weird bug where when the `allowedSound` value changes. Because its part of the dependency array of useCallback the function gets recreated, and because the function itself is a dependency of the useEffect, then the playSound function is called and we hear a sound when turning sound on. Additionally if we inc/dec a bunch of times then turn the sound off/on then our duration gets reset because of the same reasons above
+
 ```jsx
 const playSound = useCallback(
-    function () {
-      if (!allowSound) return;
-      const sound = new Audio(clickSound);
-      sound.play();
-    },
-    [allowSound]
-  );
+  function () {
+    if (!allowSound) return;
+    const sound = new Audio(clickSound);
+    sound.play();
+  },
+  [allowSound],
+);
 
-  useEffect(() => {
-    setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
-    playSound();
-  }, [number, sets, speed, durationBreak, playSound])
+useEffect(() => {
+  setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
+  playSound();
+}, [number, sets, speed, durationBreak, playSound]);
 ```
 
-
 The proper solve is to move separate logic between effects. Give them single responsibility. So we let the one effect deal with setting the duration and the other with playing the sound,
-
 
 ```jsx
 unction Calculator({ workouts, allowSound }) {
@@ -2217,12 +2234,13 @@ Redux:
 
 - 3rd party library to manage state
 - Global state stored in a "store" using "actions" (similar to useReducer)
-- Global store updated -> All consuming components rerender 
+- Global store updated -> All consuming components rerender
 - Conceptually similar to combining Context with usereducer
 - 2 ways to write Redux: 1) Classic Redux 2) Redux Tool Kit
 - Goal is to make state update logic separate from the rest of the app
 
 Do you need Redux?
+
 - Historically it was used in most React apps for global state, but now there are many alternatives. Many apps dont need it unless they have a lot of global state
 
 1. It can be hard to learn so its good to know how it works
@@ -2233,7 +2251,6 @@ With useReducer we have and event handler which -> dispatches an action with a p
 
 Redux is similar but:
 Event handler which -> Action creator function (An optional convention which makes writing actions easier and keeps them in a central place) which -> goes through a dispatcher to -> the store where one or more reducer live which are pure functions and take the current state along with the action payload (usually one reducer per app feature) and returns -> a new state which -> causes a rerender.
-
 
 ### Action Creators Intro
 
@@ -2310,8 +2327,8 @@ function customerReducer(state = initialStateCustomer, action) {
 
 const rootReducer = combineReducers({
   account: accountReducer,
-  customer: customerReducer
-})
+  customer: customerReducer,
+});
 
 const store = createStore(rootReducer);
 
@@ -2334,14 +2351,14 @@ function payLoan() {
   return { type: "account/payLoan" };
 }
 
-store.dispatch(deposit(1000))
-store.dispatch(withdraw(200))
+store.dispatch(deposit(1000));
+store.dispatch(withdraw(200));
 console.log(store.getState());
 
-store.dispatch(requestLoan(200, "Small loan"))
+store.dispatch(requestLoan(200, "Small loan"));
 console.log(store.getState());
 
-store.dispatch(payLoan())
+store.dispatch(payLoan());
 console.log(store.getState());
 
 function createCustomer(fullName, nationalID) {
@@ -2355,11 +2372,10 @@ function updateName(fullName) {
   return { type: "customer/updateName", payload: fullName };
 }
 
-store.dispatch(createCustomer('Cam Remesz', 666));
+store.dispatch(createCustomer("Cam Remesz", 666));
 console.log(store.getState());
-store.dispatch(updateName('Cameron Remesz'));
+store.dispatch(updateName("Cameron Remesz"));
 console.log(store.getState());
-
 ```
 
 ### File Structure: State Slices
@@ -2454,8 +2470,8 @@ export function createCustomer(fullName, nationalID) {
 export function updateName(fullName) {
   return { type: "customer/updateName", payload: fullName };
 }
-
 ```
+
 We run:
 `npm i react-redux`
 
@@ -2477,9 +2493,8 @@ root.render(
     <Provider store={store}>
       <App />
     </Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
-
 ```
 
 Then in any component we can use `useSelector` to access our desired part of the store.
@@ -2489,13 +2504,12 @@ Here obviously the name is blank because we haven't set it but this creates a su
 import { useSelector } from "react-redux";
 
 function Customer() {
-  const fullName = useSelector((store) => store.customer.fullName)
+  const fullName = useSelector((store) => store.customer.fullName);
 
   return <h2>👋 Welcome, {fullName}</h2>;
 }
 
 export default Customer;
-
 ```
 
 Here we use the `useDispatch` hook to get access to the dispatch method .
@@ -2513,8 +2527,8 @@ function CreateCustomer() {
   const dispatch = useDispatch();
 
   function handleClick() {
-    if(!fullName || !nationalID) return;
-    dispatch(createCustomer(fullName, nationalID))
+    if (!fullName || !nationalID) return;
+    dispatch(createCustomer(fullName, nationalID));
   }
 
   return (
@@ -2542,7 +2556,6 @@ function CreateCustomer() {
 }
 
 export default CreateCustomer;
-
 ```
 
 ```jsx
@@ -2651,12 +2664,12 @@ function AccountOperations() {
 }
 
 export default AccountOperations;
-
 ```
 
 ### Redux Middleware & Thunks
 
 Where do we make async calls with Redux?
+
 - The store holds reducers which are pure functions without side effects, so not in the store
 - Fetching data in components and then dispatching would work but this is not ideal. We want to keep them free from data fetching
 - We want data fetching all in one place...
@@ -2665,28 +2678,27 @@ Where do we make async calls with Redux?
 - We CAN write ourselves, but its easier to use a 3rd party library
 - Most common one is called Thunk
 
-
 3 Steps to "Effect" middleware:
+
 - Install middleware
 - Apply to store
 - Use in action creator functions
 
-1. 
-`npm i redux-thunk`
+1.  `npm i redux-thunk`
 
-2. Apply to store by passing a second argument to the `createStore` function which is the `applyMiddleware` function, passing in our imported middleware
+2.  Apply to store by passing a second argument to the `createStore` function which is the `applyMiddleware` function, passing in our imported middleware
 
 ```jsx
 import accountReducer from "./features/accounts/accountSlice";
 import customerReducer from "./features/customers/customerSlice";
 
-import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { createStore, combineReducers, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 
 const rootReducer = combineReducers({
   account: accountReducer,
-  customer: customerReducer
-})
+  customer: customerReducer,
+});
 
 const store = createStore(rootReducer, applyMiddleware(thunk));
 
@@ -2698,12 +2710,12 @@ Then we are going to get the currency and use it in the middleware to make an AP
 ```jsx
 // AccountOperations.js
 function handleDeposit() {
-    if (!depositAmount) return;
-    dispatch(deposit(depositAmount, currency));
-    setDepositAmount("");
-    setCurrency("USD")
-    console.log(store.getState());
-  }
+  if (!depositAmount) return;
+  dispatch(deposit(depositAmount, currency));
+  setDepositAmount("");
+  setCurrency("USD");
+  console.log(store.getState());
+}
 ```
 
 3. In our action creator function we make allow a regular synchronous dispatch to the store if no conversion is needed, otherewise we make the API call.
@@ -2712,21 +2724,22 @@ We do this by RETURNING a function that gets the `dispatch` and `getState` funct
 
 ```jsx
 export function deposit(amount, currency) {
-  if(currency === "USD") return { type: "account/deposit", payload: amount };
+  if (currency === "USD") return { type: "account/deposit", payload: amount };
 
   return async (dispatch, getState) => {
     // API Call
-    const res = await fetch(`https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`);
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`,
+    );
     const data = await res.json();
     console.log(data);
-    const convertedAmount = data.rates.USD
+    const convertedAmount = data.rates.USD;
 
     // Dispatch action
-     dispatch({ type: "account/deposit", payload: convertedAmount })
-  }
+    dispatch({ type: "account/deposit", payload: convertedAmount });
+  };
 }
 ```
-
 
 ### Redux Dev Tools
 
@@ -2742,16 +2755,19 @@ Then we wrap the `applyMiddleware` function with the `composeWithDevTools` funct
 import accountReducer from "./features/accounts/accountSlice";
 import customerReducer from "./features/customers/customerSlice";
 
-import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { createStore, combineReducers, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 import { composeWithDevTools } from "redux-devtools-extension";
 
 const rootReducer = combineReducers({
   account: accountReducer,
-  customer: customerReducer
-})
+  customer: customerReducer,
+});
 
-const store = createStore(rootReducer, composeWithDevTools(applyMiddleware(thunk)));
+const store = createStore(
+  rootReducer,
+  composeWithDevTools(applyMiddleware(thunk)),
+);
 
 export default store;
 ```
@@ -2765,20 +2781,22 @@ Additionally you can manually dispatch actions in the devtools as well
 ### Modern Redux (Redux Tool Kit - RTK)
 
 Redux Tool Kit
+
 - Recommended by the Redux team
 - Forces us to use best practices
 - Can use classic redux and RTK together "IF needed"
 - Write a lot less code to achieve the same results
 
 3 Hightlights:
+
 - Write code that "Looks like" it mutates state inside reducers (Using a library called Immer which converts our code back to non-mutating) This allows for complex state to be easily managed
 - Automatically creates action creators from our reducers, which CAN create extra work for us in some instances
 - Automatic setup of Thunk middleware & Redux devtools
 
-
 `npm i @reduxjs/toolkit`
 
 The store with RTK (much simpler):
+
 ```js
 // store.js
 import accountReducer from "./features/accounts/accountSlice";
@@ -2791,17 +2809,16 @@ const store = configureStore({
 });
 
 export default store;
-
 ```
 
 The concept of slices is baked into RTK. So now we get a `createSlice` function that we pass a config object to build our slice. We give it:
+
 - A name
 - The initial state
 - Our reducers
   - The reducers are now seemingly mutating state directly so we dont need to copy the old state or return a new state, we directly assign new values to the state
 
 The reducers in RTK by default only accept one value as the payload. If we want more then we need to use prepare function before the reducer to define a multi-value payload as seen in `requestLoan`.
-
 
 ```js
 import { createSlice } from "@reduxjs/toolkit";
@@ -2847,10 +2864,10 @@ const accountSlice = createSlice({
 export const { deposit, withdraw, requestLoan, payLoan } = accountSlice.actions;
 
 export default accountSlice.reducer;
-
 ```
 
 Another footgun from being so opinionated is that updates to state now have to happen IN THE ORDER THEY SHOULD OCCUR. Notice below the example if the loan is set to 0 first, then the second line `state.balance -= state.loan;` would result in `0` being subtracted from the `state.balance`, so the balance wouldn't even change.
+
 ```js
 payLoan(state, action) {
   state.loan = 0;
@@ -2862,6 +2879,7 @@ payLoan(state, action) {
 ### Redux vs Context API
 
 Context + useReducer:
+
 - Built into React
 - Easy to setup single context
 - Additional state "slice" requires a new context for each (leads to provider hell in App.js)
@@ -2870,6 +2888,7 @@ Context + useReducer:
 - Only simple React devtools
 
 Redux:
+
 - 3rd party library (larger bundle size)
 - More work to set up initially
 - Easy to create new slices
@@ -2879,21 +2898,23 @@ Redux:
 
 Usage:
 
-Generic advice - Use context for small apps, redux for large ones 
+Generic advice - Use context for small apps, redux for large ones
 
 Context + useReducer:
+
 - Good with values that don't change often
 - Solve prop drilling
 - Manage state in a smaller sub-tree of the app (compound component pattern)
 
 Redux:
+
 - Global UI state that changes often (Shopping cart, current tabs, filts, search) because it is automatically optimized for this
 - Complex state with nested objects/arrays (RTK allows you to mutate state)
 - Not super common for UI state (Redux has started to fall out of favor)
 
 Good advice - Use whats best for your app based on your needs and make an educated decision
 
-## Professional React 
+## Professional React
 
 ## Professional Setup
 
@@ -2914,15 +2935,14 @@ And also add the eslint plugin to the plugin array
 
 ```js
 // vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import eslint from 'vite-plugin-eslint'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import eslint from "vite-plugin-eslint";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), eslint],
-})
-
+});
 ```
 
 AND... for whatever reason, I need to add an empty `jsconfig.json` at the top level to make a shit ton of react errors go away??????
@@ -2930,21 +2950,28 @@ AND... for whatever reason, I need to add an empty `jsconfig.json` at the top le
 ### Application Planning
 
 #### For smaller apps
+
 1. Break desired UI in components
 2. Build the static version (no state)
 3. Think about state MGMT & data flow
 
 #### For larger real world apps
+
 1. Gather application requirements & features
 2. Divide the app into pages
-  - Think about overall and page level UI
-  - Break UI into components
-  - Design and build static version
+
+- Think about overall and page level UI
+- Break UI into components
+- Design and build static version
+
 3. Divide the app into feature categories
-  - For each feature category think about state MGMT & data flow
+
+- For each feature category think about state MGMT & data flow
+
 4. Tech decisions (libraries)
 
 #### App Requirements
+
 - Simple app to order one or more pizzas from a menu
 - No login required
 - Pizza menu can change (should be loaded from an API)
@@ -2960,19 +2987,22 @@ AND... for whatever reason, I need to add an empty `jsconfig.json` at the top le
 #### Features & Pages
 
 Feature Categories
+
 1. User
 2. Menu
 3. Cart
 4. Order
 
 Pages
-1. Home Page `/` 
+
+1. Home Page `/`
 2. Pizza Menu `/menu`
 3. Pizza Cart `/cart`
 4. Placing New Order `/order/new`
 5. Looking Up An Order `/order/:id`
 
 #### State MGMT
+
 Feature categories usually map well to state slices
 
 1. User -> Global UI (No accounts so stays in app)
@@ -3010,59 +3040,54 @@ With the new version of React Router, if we want to access the new powerful APIs
 Create a sort of shell, we can create a parent route that takes no path property (So it gets rendered no matter what, in react router these are called 'Layout Routes') Then we add the children property and any child path will render the corresponding component. Keep in mind you have to use the `Outlet` component from `react-router-dom` to tell react where to render the children
 
 ```jsx
-import { RouterProvider, createBrowserRouter } from "react-router-dom"
-import Home from "./features/ui/Home"
-import Menu from "./features/menu/Menu"
-import Cart from "./features/cart/Cart"
-import CreateOrder from "./features/order/CreateOrder"
-import Order from "./features/order/Order"
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import Home from "./features/ui/Home";
+import Menu from "./features/menu/Menu";
+import Cart from "./features/cart/Cart";
+import CreateOrder from "./features/order/CreateOrder";
+import Order from "./features/order/Order";
 
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
-    children:  [{
-      path: '/',
-      element: <Home />
-    },
-    {
-      path: '/menu',
-      element: <Menu />
-    },
-    {
-      path: '/cart',
-      element: <Cart/>
-    },
-    {
-      path: '/order/new',
-      element: <CreateOrder />
-    },
-    {
-      path: '/order/:id',
-      element: <Order />
-    }]
+    children: [
+      {
+        path: "/",
+        element: <Home />,
+      },
+      {
+        path: "/menu",
+        element: <Menu />,
+      },
+      {
+        path: "/cart",
+        element: <Cart />,
+      },
+      {
+        path: "/order/new",
+        element: <CreateOrder />,
+      },
+      {
+        path: "/order/:id",
+        element: <Order />,
+      },
+    ],
   },
-  
-])
-
+]);
 
 function App() {
-  return (
-    <RouterProvider router={router}>
-
-    </RouterProvider>
-  )
+  return <RouterProvider router={router}></RouterProvider>;
 }
 
-export default App
-
+export default App;
 ```
 
 ```jsx
 // AppLayout.jsx
-import { Outlet } from "react-router-dom"
+import { Outlet } from "react-router-dom";
 
-import Header from "./Header"
-import CartOverview from "../cart/CartOverview"
+import Header from "./Header";
+import CartOverview from "../cart/CartOverview";
 
 function AppLayout() {
   return (
@@ -3075,11 +3100,10 @@ function AppLayout() {
 
       <CartOverview />
     </div>
-  )
+  );
 }
 
-export default AppLayout
-
+export default AppLayout;
 ```
 
 ### Fetching Data - Loaders
@@ -3090,17 +3114,17 @@ export default AppLayout
 
 Can be placed anywhere but convention is to place it in the file of that page.
 
-
 We have a file in our services related to all our data fetching functions for a part of the app
+
 ```js
 // apiRestaurant.js
-const API_URL = 'https://react-fast-pizza-api.onrender.com/api';
+const API_URL = "https://react-fast-pizza-api.onrender.com/api";
 
 export async function getMenu() {
   const res = await fetch(`${API_URL}/menu`);
 
   // fetch won't throw error on 400 errors (e.g. when URL is wrong), so we need to do it manually. This will then go into the catch block, where the message is set
-  if (!res.ok) throw Error('Failed getting menu');
+  if (!res.ok) throw Error("Failed getting menu");
 
   const { data } = await res.json();
   return data;
@@ -3122,9 +3146,9 @@ function Menu() {
 
   return (
     <ul>
-      {
-        menu.map(zah => <MenuItem key={zah.id} pizza={zah}/>)
-      }
+      {menu.map((zah) => (
+        <MenuItem key={zah.id} pizza={zah} />
+      ))}
     </ul>
   );
 }
@@ -3134,7 +3158,6 @@ export async function loader() {
 }
 
 export default Menu;
-
 ```
 
 ```jsx
@@ -3173,7 +3196,7 @@ import Loading from "./Loading";
 
 function AppLayout() {
   const navigation = useNavigation();
-  const isLoading = navigation.state === 'loading'
+  const isLoading = navigation.state === "loading";
   console.log(navigation);
   // formAction: undefined
   // formData: undefined
@@ -3199,35 +3222,36 @@ function AppLayout() {
 }
 
 export default AppLayout;
-
 ```
 
 ### Errors
 
-React router now provides an `errorElement` property where we can pass an element to be shown if an error occurs. Any error that occurs, whether it be due to a component rendering, or due to failed http request, the error will bubble up until it hits a route where the `errorElement` is defined to be handled. In the error component we can then use the `useRouteError` hook to get the error info and display it. Here we handle the instance of a fetch request going wrong in the menu component. as well as at the  `AppLayout` level if navigating to an unknown route for ex.) `/sdfgdsfghfg`. The router automatically displays a nicely formatted message based on the `error.data` or `error.message`.
+React router now provides an `errorElement` property where we can pass an element to be shown if an error occurs. Any error that occurs, whether it be due to a component rendering, or due to failed http request, the error will bubble up until it hits a route where the `errorElement` is defined to be handled. In the error component we can then use the `useRouteError` hook to get the error info and display it. Here we handle the instance of a fetch request going wrong in the menu component. as well as at the `AppLayout` level if navigating to an unknown route for ex.) `/sdfgdsfghfg`. The router automatically displays a nicely formatted message based on the `error.data` or `error.message`.
 
 ```jsx
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
-    errorElement: <Error/>,
-    children:  [{
-      path: '/',
-      element: <Home />
-    },
-    {
-      path: '/menu',
-      errorElement: <Error/>,
-      element: <Menu />,
-      loader: menuLoader,
-    }]
-  }
-])  
+    errorElement: <Error />,
+    children: [
+      {
+        path: "/",
+        element: <Home />,
+      },
+      {
+        path: "/menu",
+        errorElement: <Error />,
+        element: <Menu />,
+        loader: menuLoader,
+      },
+    ],
+  },
+]);
 ```
 
 ```jsx
 // Error.jsx
-import { useNavigate, useRouteError } from 'react-router-dom';
+import { useNavigate, useRouteError } from "react-router-dom";
 
 function Error() {
   const navigate = useNavigate();
@@ -3250,8 +3274,8 @@ If we need our http functions to access parameters we can't just use the `usePar
 
 ```jsx
 // Orders.jsx
-export async function loader({params}) {
-  return await getOrder(params.orderId)
+export async function loader({ params }) {
+  return await getOrder(params.orderId);
 }
 ```
 
@@ -3263,7 +3287,7 @@ Actions follow the same pattern as loaders, where you defined your action in the
 
 The action function intercepts the request from the form submission and we get access to it. So we call the `request.formData()` to get the formData then we call the `Object.fromEntries()` function from JS to pull out our input data. At this point we can format the data as needed and perform any http requests as desired like in our `createOrder` function. This returns the new order from the api with its created id so the we can call the `redirect` method provided by react router and navigate to the newly created order.
 
-Additionally we can perform some custom validation/error handling with help of the action. We can check the phone number to make sure its formatted properly and if not we can return early with an errors object. Anything we return from the action we can access through the `useActionData` hook and then render some validation feedback as needed. 
+Additionally we can perform some custom validation/error handling with help of the action. We can check the phone number to make sure its formatted properly and if not we can return early with an errors object. Anything we return from the action we can access through the `useActionData` hook and then render some validation feedback as needed.
 
 ```jsx
 // App.jsx
@@ -3282,7 +3306,7 @@ import { createOrder } from "../services/apiRestaurant";
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
   /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
-    str
+    str,
   );
 
 function CreateOrder() {
@@ -3307,7 +3331,7 @@ function CreateOrder() {
           <div>
             <input type="tel" name="phone" required />
           </div>
-          {formErrors?.phone && <p>{formErrors.phone}</p> }
+          {formErrors?.phone && <p>{formErrors.phone}</p>}
         </div>
 
         <div>
@@ -3318,11 +3342,7 @@ function CreateOrder() {
         </div>
 
         <div>
-          <input
-            type="checkbox"
-            name="priority"
-            id="priority"
-          />
+          <input type="checkbox" name="priority" id="priority" />
           <label htmlFor="priority">Want to yo give your order priority?</label>
         </div>
 
@@ -3361,7 +3381,6 @@ export async function action({ request }) {
 }
 
 export default CreateOrder;
-
 ```
 
 ## Redux w/ Advanced React Router
@@ -3375,35 +3394,29 @@ Selectors that do not require any argument to be passed in will only need the fu
 
 ```jsx
 // cartSlice.js
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   cart: [],
 };
 
 const cartSlice = createSlice({
-  name: 'cart',
+  name: "cart",
   initialState,
   reducers: {
     addItem(state, action) {
       state.cart = [...state.cart, action.payload];
     },
     deleteItem(state, action) {
-      state.cart = state.cart.filter(
-        (pizza) => pizza.id !== action.payload
-      );
+      state.cart = state.cart.filter((pizza) => pizza.id !== action.payload);
     },
     increaseItemQty(state, action) {
-      const pizza = state.cart.find(
-        (pizza) => pizza.id === action.payload
-      );
+      const pizza = state.cart.find((pizza) => pizza.id === action.payload);
       pizza.quantity++;
       pizza.totalPrice = pizza.quantity * pizza.unitPrice;
     },
     decreaseItemQty(state, action) {
-      const pizza = state.cart.find(
-        (pizza) => pizza.id === action.payload
-      );
+      const pizza = state.cart.find((pizza) => pizza.id === action.payload);
       pizza.quantity--;
       pizza.totalPrice = pizza.quantity * pizza.unitPrice;
     },
@@ -3428,16 +3441,13 @@ export const getCart = (state) => state.cart.cart;
 export const getTotalCartQuantity = (state) =>
   state.cart.cart.reduce((acc, cur) => acc + cur.quantity, 0);
 
-
 //  ======== NOTE FROM ABOVE ========
-
 
 export const getTotalCartPrice = (state) =>
   state.cart.cart.reduce((acc, cur) => acc + cur.unitPrice, 0);
 
 export const getQuantityById = (id) => (state) =>
   state.cart.cart.find((item) => item.id === id)?.quantity ?? 0;
-
 ```
 
 ```jsx
@@ -3458,17 +3468,16 @@ function MenuItem({ pizza }) {
 
 ### Crash Course/Basics
 
-Styled components actually just leverage an uncommon feature of ES6 called [tagged template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals). This allows for the template literal to be passed to a function which is the `styled.{htmlElement}` function. To use them we declare a const variable uppercased because they are going to be components. Then we use the `styled.` function with the type of html element appended. Then immediately following we use template literals and define our css as per usual. Under the hood styled components will ensure these styles are specifically scoped to that exact component with a unique class name. The components can then be used in our render logic and have the ability of regular components with all expected event handlers built in. To styled the top level functional component Ex.) `App` We create a styled component with convention being `Styled` + `ComponentName` and use a `styled.div` at the top level. 
-
+Styled components actually just leverage an uncommon feature of ES6 called [tagged template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals). This allows for the template literal to be passed to a function which is the `styled.{htmlElement}` function. To use them we declare a const variable uppercased because they are going to be components. Then we use the `styled.` function with the type of html element appended. Then immediately following we use template literals and define our css as per usual. Under the hood styled components will ensure these styles are specifically scoped to that exact component with a unique class name. The components can then be used in our render logic and have the ability of regular components with all expected event handlers built in. To styled the top level functional component Ex.) `App` We create a styled component with convention being `Styled` + `ComponentName` and use a `styled.div` at the top level.
 
 ```jsx
-import styled from "styled-components"
+import styled from "styled-components";
 
 const H1 = styled.h1`
   font-size: 30px;
   font-weight: 600;
   background-color: yellow;
-`
+`;
 
 const Button = styled.button`
   font-size: 1.4rem;
@@ -3480,19 +3489,18 @@ const Button = styled.button`
   color: white;
   cursor: pointer;
   margin: 20px;
-`
+`;
 
 const Input = styled.input`
   border: 1px solid #ddd;
   border-radius: 5px;
-  padding: .8rem 1.2rem; 
-`
+  padding: 0.8rem 1.2rem;
+`;
 
 const StyledApp = styled.div`
   background-color: orangered;
   padding: 20px;
-
-`
+`;
 
 function App() {
   return (
@@ -3502,19 +3510,17 @@ function App() {
       <Button onClick={() => alert(`Feckin hell`)}>Check In</Button>
       <Button onClick={() => alert(`Feckin hell`)}>Check Out</Button>
 
-      <Input type='number' placeholder='Number of guests'></Input>
+      <Input type="number" placeholder="Number of guests"></Input>
     </StyledApp>
-  )
+  );
 }
 
-export default App
-
+export default App;
 ```
-
 
 ### Global Styles
 
-For global styles we can put a `globalstyles.js` in our styles folder and export a styled component just like any other it with all our css inside the template literals, including all valid css such as css variables defined with `:root`. 
+For global styles we can put a `globalstyles.js` in our styles folder and export a styled component just like any other it with all our css inside the template literals, including all valid css such as css variables defined with `:root`.
 
 Then to use it we need to make it a self closing sibling of the app.
 
@@ -3565,14 +3571,14 @@ function App() {
     <>
       <GlobalStyles />
       <StyledApp>
-        <Heading as='h1'>The Wild Oasis</Heading>
+        <Heading as="h1">The Wild Oasis</Heading>
         {/* <Heading type='h1'>The Wild Oasis</Heading> */}
-        <Heading as='h2'>Check in and out</Heading>
+        <Heading as="h2">Check in and out</Heading>
 
         <Button onClick={() => alert(`Feckin hell`)}>Check In</Button>
         <Button onClick={() => alert(`Feckin hell`)}>Check Out</Button>
 
-        <Heading as='h3'>Form</Heading>
+        <Heading as="h3">Form</Heading>
         <Input type="number" placeholder="Number of guests"></Input>
       </StyledApp>
     </>
@@ -3580,36 +3586,43 @@ function App() {
 }
 ```
 
-
 ```jsx
 import styled, { css } from "styled-components";
 
 const Heading = styled.h1`
-  ${props => props.as === 'h1' && css`
-  font-size: 3rem;
-  font-weight: 600;
-  `}
+  ${(props) =>
+    props.as === "h1" &&
+    css`
+      font-size: 3rem;
+      font-weight: 600;
+    `}
 
-  // ${props => props.type === 'h2' && css`
-  // font-size: 2rem;
-  // font-weight: 600;
-  // `}
+  // ${(props) =>
+    props.type === "h2" &&
+    css`
+      // font-size: 2rem;
+      // font-weight: 600;
+      //
+    `}
 
-  ${props => props.as === 'h2' && css`
-  font-size: 2rem;
-  font-weight: 600;
-  `}
+  ${(props) =>
+    props.as === "h2" &&
+    css`
+      font-size: 2rem;
+      font-weight: 600;
+    `}
 
-  ${props => props.as === 'h3' && css`
-  font-size: 1rem;
-  font-weight: 500;
-  `}
+  ${(props) =>
+    props.as === "h3" &&
+    css`
+      font-size: 1rem;
+      font-weight: 500;
+    `}
   
   line-height: 1.4;
 `;
 
 export default Heading;
-
 ```
 
 ### Making Reusable Components
@@ -3617,7 +3630,6 @@ export default Heading;
 We can see in the `Row` component we access the props and decide how to style based on what is passed in. We also give it a default propType so we don't have to define the prop if we just want the default styling.
 
 In the `Button` component we do the same thing but then take it a bit further with JS in the template literals with props. We can define our different variants for sizes/variations in their own objects with each key containing its unique styling. Then when accepting the props we can us object index access to determine programmatically what style should be applied.
-
 
 ```jsx
 function App() {
@@ -3631,10 +3643,10 @@ function App() {
             <div>
               <Heading as="h2">Check in and out</Heading>
 
-              <Button>
-                Check In
+              <Button>Check In</Button>
+              <Button variation="secondary" size="small">
+                Check Out
               </Button>
-              <Button variation="secondary" size="small">Check Out</Button>
             </div>
           </Row>
 
@@ -3651,7 +3663,6 @@ function App() {
   );
 }
 ```
-
 
 ```jsx
 import styled, { css } from "styled-components";
@@ -3675,11 +3686,10 @@ const Row = styled.div`
 `;
 
 Row.defaultProps = {
-  type: 'vertical'
-}
+  type: "vertical",
+};
 
 export default Row;
-
 ```
 
 ```jsx
@@ -3738,14 +3748,14 @@ const Button = styled.button`
   border-radius: var(--border-radius-sm);
   box-shadow: var(--shadow-sm);
 
-  ${props => sizes[props.size]}
-  ${props => variations[props.variation]}
+  ${(props) => sizes[props.size]}
+  ${(props) => variations[props.variation]}
 `;
 
 Button.defaultProps = {
-  variation: 'primary',
-  size: 'medium'
-}
+  variation: "primary",
+  size: "medium",
+};
 
 export default Button;
 ```
@@ -3760,7 +3770,7 @@ The docs are very easy to use and GUI is very intuitive. RTFM.
 
 ### Overview
 
-- A library for managing remote state
+- A library for managing REMOTE STATE (Not local/global UI state)
 - Allow us to write less code and improve the UI by:
   - Having data stored in a cache
   - Automatic loading and error states
@@ -3770,9 +3780,10 @@ The docs are very easy to use and GUI is very intuitive. RTFM.
   - Offline support
 - A library like this is needed because remote state is fundamentally different from UI state
   - With many users, remote state can get out of sync with a given users UI state
-
+- Next js handles alot of this in its app router so may not be needed in a Next.js application
 
 ### Data Fetching/Mutations
+
 We install react query with npm. Then in our app component we ned to create a provider that contains some defualt options. The stale option here is how fast the cache is invalidated. RTFM. Then we wrap the entire app in the QueryClientProvider passing the client prop our defined queryClient.
 
 ```jsx
@@ -3798,17 +3809,17 @@ function App() {
 }
 ```
 
-To use queries we use the `useQuery` hook which has a ton of properties we can access and destructure. *Log them out if you need to see or...RTFM*. We pass it an object defining a queryKey that we will use for that specific table. Then we pass it a query function which we define in our apiCabin.js and import. This will run on load getting us our cabins which we then map over.
+To use queries we use the `useQuery` hook which has a ton of properties we can access and destructure. _Log them out if you need to see or...RTFM_. We pass it an object defining a queryKey that we will use for that specific table. Then we pass it a query function which we define in our apiCabin.js and import. This will run on load getting us our cabins which we then map over.
 
 ```jsx
 // CabinTable.jsx
 function CabinTable() {
-  const { isLoading, data: cabins }= useQuery({
-    queryKey: ['cabins'],
-    queryFn: getCabins
-  })
+  const { isLoading, data: cabins } = useQuery({
+    queryKey: ["cabins"],
+    queryFn: getCabins,
+  });
 
-  if(isLoading) return <Spinner />
+  if (isLoading) return <Spinner />;
 
   return (
     <Table role="table">
@@ -3820,12 +3831,14 @@ function CabinTable() {
         <div>Discount</div>
         <div> </div>
       </TableHeader>
-      {cabins.map(cabin => <CabinRow cabin={cabin} key={cabin.id}/>)}
+      {cabins.map((cabin) => (
+        <CabinRow cabin={cabin} key={cabin.id} />
+      ))}
     </Table>
-  )
+  );
 }
 
-export default CabinTable
+export default CabinTable;
 ```
 
 We can copy and paste the SQL queries directly from supabase.
@@ -3846,15 +3859,12 @@ export async function getCabins() {
 }
 
 export async function deleteCabin(id) {
-  const { error } = await supabase
-    .from("cabins")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("cabins").delete().eq("id", id);
 
-    if (error) {
-      console.error("Cabins could not be deleted");
-      throw new Error("Cabins could not be deleted");
-    }
+  if (error) {
+    console.error("Cabins could not be deleted");
+    throw new Error("Cabins could not be deleted");
+  }
 }
 ```
 
@@ -3863,33 +3873,406 @@ Then to mutate data we use the `useQueryClient` hook and store it in a variable.
 ```jsx
 // CabinRow.jsx
 function CabinRow({ cabin }) {
-  const { name, maxCapacity, regularPrice, discount, image, id: cabinId } = cabin;
+  const {
+    name,
+    maxCapacity,
+    regularPrice,
+    discount,
+    image,
+    id: cabinId,
+  } = cabin;
 
   const queryClient = useQueryClient();
 
-  const {isLoading: isDeleting, mutate} = useMutation({
+  const { isLoading: isDeleting, mutate } = useMutation({
     mutationFn: deleteCabin,
     onSuccess: () => {
-      toast.success('Cabin successfully deleted')
+      toast.success("Cabin successfully deleted");
 
       queryClient.invalidateQueries({
-        queryKey: ['cabins']
+        queryKey: ["cabins"],
       });
     },
-    onError: err => toast.error(err.message)
-  })
+    onError: (err) => toast.error(err.message),
+  });
 
   return (
     <TableRow role="row">
-      <Img src={image}/>
+      <Img src={image} />
       <Cabin>{name}</Cabin>
       <div>Fits up to {maxCapacity} guests</div>
       <Price>{formatCurrency(regularPrice)}</Price>
       <Discount>{formatCurrency(discount)}</Discount>
-      <button disabled={isDeleting} onClick={() => mutate(cabinId)}>Delete</button>      
+      <button disabled={isDeleting} onClick={() => mutate(cabinId)}>
+        Delete
+      </button>
     </TableRow>
-  )
+  );
 }
 
-export default CabinRow
+export default CabinRow;
+```
+
+## Advanced React Patterns
+
+### Reusability in React
+
+We can reuse:
+
+- Pieces of UI
+- Stateful logic (Hooks)
+- Non-stateful (Normal js functions)
+
+1. UI
+
+- Components
+- Props
+- Children props
+
+2. Stateful Logic
+
+- Custom hooks
+
+What if we need to reuse UI & stateful logic in a more advanced way?
+
+Different patterns:
+
+1. Render Props (More common before hooks, but handy in some specific situations)
+
+- User has control over what the component renders by passing in a function as a prop
+
+2. Compound Components
+
+- Multiple components very self-contained components that want/need to manage their own state. Pieced together to build almost "Super Components"
+
+#### Render Props
+
+Below if we want to render 2 lists one of products and one of companies, but they are different components. We could make 2 different list components but thats not ideal, causes duplication etc. We want to reuse both the stateful logic AND the UI of one list we've already built.
+
+Additionally we could look at children props and render 2 list components but then duplicate the ul in component composition and we wouldnt have access to the logic of displayItems for collapsing the amount of items.
+
+```jsx
+import { useState } from "react";
+import { faker } from "@faker-js/faker";
+import "./styles.css";
+
+const products = Array.from({ length: 20 }, () => {
+  return {
+    productName: faker.commerce.productName(),
+    description: faker.commerce.productDescription(),
+    price: faker.commerce.price(),
+  };
+});
+
+const companies = Array.from({ length: 15 }, () => {
+  return {
+    companyName: faker.company.name(),
+    phrase: faker.company.catchPhrase(),
+  };
+});
+
+function ProductItem({ product }) {
+  return (
+    <li className="product">
+      <p className="product-name">{product.productName}</p>
+      <p className="product-price">${product.price}</p>
+      <p className="product-description">{product.description}</p>
+    </li>
+  );
+}
+
+function CompanyItem({ company, defaultVisibility }) {
+  const [isVisible, setIsVisisble] = useState(defaultVisibility);
+
+  return (
+    <li
+      className="company"
+      onMouseEnter={() => setIsVisisble(true)}
+      onMouseLeave={() => setIsVisisble(false)}
+    >
+      <p className="company-name">{company.companyName}</p>
+      {isVisible && (
+        <p className="company-phrase">
+          <strong>About:</strong> {company.phrase}
+        </p>
+      )}
+    </li>
+  );
+}
+
+function List({ title, items }) {
+  const [isOpen, setIsOpen] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const displayItems = isCollapsed ? items.slice(0, 3) : items;
+
+  function toggleOpen() {
+    setIsOpen((isOpen) => !isOpen);
+    setIsCollapsed(false);
+  }
+
+  return (
+    <div className="list-container">
+      <div className="heading">
+        <h2>{title}</h2>
+        <button onClick={toggleOpen}>
+          {isOpen ? <span>&or;</span> : <span>&and;</span>}
+        </button>
+      </div>
+      {isOpen && (
+        <ul className="list">
+          {displayItems.map((product) => (
+            <ProductItem key={product.productName} product={product} />
+          ))}
+        </ul>
+      )}
+
+      <button onClick={() => setIsCollapsed((isCollapsed) => !isCollapsed)}>
+        {isCollapsed ? `Show all ${items.length}` : "Show less"}
+      </button>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <div>
+      <h1>Render Props Demo</h1>
+
+      <div className="col-2">
+        <List title="Products" items={products} />
+      </div>
+    </div>
+  );
+}
+```
+
+So what we use is render props which is passing a function to the `render` prop making the list component essentially not car what its rendering at all, then we can pass it any function to handle the display alongside our reusable logic.
+
+```jsx
+import { useState } from "react";
+import { faker } from "@faker-js/faker";
+import "./styles.css";
+
+const products = Array.from({ length: 20 }, () => {
+  return {
+    productName: faker.commerce.productName(),
+    description: faker.commerce.productDescription(),
+    price: faker.commerce.price(),
+  };
+});
+
+const companies = Array.from({ length: 15 }, () => {
+  return {
+    companyName: faker.company.name(),
+    phrase: faker.company.catchPhrase(),
+  };
+});
+
+function ProductItem({ product }) {
+  return (
+    <li className="product">
+      <p className="product-name">{product.productName}</p>
+      <p className="product-price">${product.price}</p>
+      <p className="product-description">{product.description}</p>
+    </li>
+  );
+}
+
+function CompanyItem({ company, defaultVisibility }) {
+  const [isVisible, setIsVisisble] = useState(defaultVisibility);
+
+  return (
+    <li
+      className="company"
+      onMouseEnter={() => setIsVisisble(true)}
+      onMouseLeave={() => setIsVisisble(false)}
+    >
+      <p className="company-name">{company.companyName}</p>
+      {isVisible && (
+        <p className="company-phrase">
+          <strong>About:</strong> {company.phrase}
+        </p>
+      )}
+    </li>
+  );
+}
+
+function List({ title, items, render }) {
+  const [isOpen, setIsOpen] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const displayItems = isCollapsed ? items.slice(0, 3) : items;
+
+  function toggleOpen() {
+    setIsOpen((isOpen) => !isOpen);
+    setIsCollapsed(false);
+  }
+
+  return (
+    <div className="list-container">
+      <div className="heading">
+        <h2>{title}</h2>
+        <button onClick={toggleOpen}>
+          {isOpen ? <span>&or;</span> : <span>&and;</span>}
+        </button>
+      </div>
+      {isOpen && <ul className="list">{displayItems.map(render)}</ul>}
+
+      <button onClick={() => setIsCollapsed((isCollapsed) => !isCollapsed)}>
+        {isCollapsed ? `Show all ${items.length}` : "Show less"}
+      </button>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <div>
+      <h1>Render Props Demo</h1>
+
+      <div className="col-2">
+        <List
+          title="Products"
+          items={products}
+          render={(product) => (
+            <ProductItem key={product.productName} product={product} />
+          )}
+        />
+        <List
+          title="Companies"
+          items={companies}
+          render={(company) => (
+            <CompanyItem
+              key={company.companyName}
+              company={company}
+              defaultVisibility={false}
+            />
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+
+#### Compound Components
+
+Allows us the flexibility when configuring by easily being able to rearrange child components. This also prevents props explosion from trying to configure all the options like below
+
+```jsx
+import Counter from "./Counter";
+import "./styles.css";
+
+export default function App() {
+  return (
+    <div>
+      <h1>Compound Component Pattern</h1>
+      <Counter
+        iconIncrease="+"
+        iconDecrease="-"
+        label="My NOT so flexible counter"
+        hideLabel={false}
+        hideIncrease={false}
+        hideDecrease={false}
+      />
+    </div>
+  );
+}
+
+
+```
+
+To create a compound component we need to use a context
+
+
+```jsx
+// Counter.js
+import { createContext, useContext, useState } from "react";
+
+// 1. Create a context
+const CounterContext = createContext();
+
+// 2. Create parent component
+function Counter({ children }) {
+  const [count, setCount] = useState(0);
+  const increase = () => setCount((c) => c + 1);
+  const decrease = () => setCount((c) => c - 1);
+
+  return (
+    <CounterContext.Provider value={{ count, increase, decrease }}>
+      <span>{children}</span>
+    </CounterContext.Provider>
+  );
+}
+
+// 3. Create child components to help implementing the common task
+function Count() {
+  const { count } = useContext(CounterContext);
+  return <span>{count}</span>;
+}
+
+function Label({ children }) {
+  return <span>{children}</span>;
+}
+
+function Increase({ icon }) {
+  const { increase } = useContext(CounterContext);
+  return <button onClick={increase}>{icon}</button>;
+}
+
+function Decrease({ icon }) {
+  const { decrease } = useContext(CounterContext);
+  return <button onClick={decrease}>{icon}</button>;
+}
+// 4. Add child components as proeprties to parent component
+Counter.Count = Count;
+Counter.Label = Label;
+Counter.Increase = Increase;
+Counter.Decrease = Decrease;
+
+export default Counter;
+
+```
+
+```jsx
+// App.js
+import Counter from "./Counter";
+import "./styles.css";
+
+export default function App() {
+  return (
+    <div>
+      <h1>Compound Component Pattern</h1>
+      {/* <Counter
+        iconIncrease="+"
+        iconDecrease="-"
+        label="My NOT so flexible counter"
+        hideLabel={false}
+        hideIncrease={false}
+        hideDecrease={false}
+        positionCount="top"
+      /> */}
+
+      <Counter>
+        <Counter.Label>My super flexible counter</Counter.Label>
+        <Counter.Decrease icon="-" />
+        <Counter.Increase icon="+" />
+        <Counter.Count />
+      </Counter>
+
+      <div>
+        <Counter>
+          <Counter.Decrease icon="◀️" />
+          <div>
+            <Counter.Count />
+          </div>
+          <Counter.Increase icon="▶️" />
+        </Counter>
+      </div>
+    </div>
+  );
+}
+
 ```
