@@ -4274,5 +4274,669 @@ export default function App() {
     </div>
   );
 }
+```
+
+## Next.js w/ App Router
+
+### SSR
+
+Client Side (CSR) vs Server Side Rendering (SSR)
+
+CSR
+- HTML shipped to the user and rendered on the clients computer using JS
+- Slower initial page loads
+ - Big JS bundle needs to download before app can run
+ - Data fetched after components mount
+- Highly interactive user experience
+- Good where SEO isnt a concern
+ - Internal tools
+ - Apps hidden behind logins
+
+SSR
+- HTML rendered on the server
+- Faster initial page loads
+ - Less JS
+ - Data fetched on server before HTML rendered
+- Less interactive
+ - Pages must be downloaded on demand
+- SEO is easier for search engines because the content is already there
+- Good for content driven websites where SEO is essential
+ - E-commerce, blogs, marketing, news websites
+- 2 types:
+ - Static SSG (Static Site Generation) - HTML generated at build time
+ - Dynamic - HTML generated eachtime server gets a request (Some call this only SSR)
+
+**Hydration**
+- Adds back interactivity and event handlers that were lost when HTML was server side rendered
+- The HTML page on the client then also downloads the JS bundle which will hydrate our static dom to add back interactivity
+- React builds the component tree on the client and compares it with the actual SSRd DOM: They must be the same for React to adopt it
+- If there is a mismatch which is uncommon they are called a hydration error
+
+ ### What is Next.js?
+
+- A meta framework on top of React (We still use components, props, hooks etc.)
+- Gives an opinionated take on things like routing, data fetching etc that you need to follow
+- Allows us to build fullstack apps
+- Gives us cutting edge features that need to be baked into a framework e.g. Suspense, Server Components etc
+
+Key Features:
+1. SSR
+2. File based routing
+3. Data fetching/mutation on the server (Server Components/Server Actions)
+4. Performance optimizations out of the box
+
+2 Routers:
+1. Pages:
+- Legacy
+
+2. App:
+- Recommended
+
+### What are RSC (React Server Components)?
+
+They bridge the gap between what has been known as CSR & SSR
+
+- React renders server components (SCs) on the server, creating a react element tree with rendered SCs and place holder client components (CCs) called the RSC payload
+- This is because functions and objects cannot be serialized and sent to the client so CCs cant be rendered on the server
+- The JS bundle is still also sent to the client just like in CSR as we've known before in regular SPAs
+- The RSC payload is sent to the client and the place holder CCs contain serialized props from parent SCs as well as a url to get their corresponding interactivity from the bundle
+- Then the full react element tree is "Hydrated" and built and then the react tree behaves mostly normally with the caveat of SCs rerendering on navigation instead of state change like CCs
+
+
+
+### Basics
+
+- Next JS uses file based routing so anything under the app dir with a `page.js` get a route and is displayed at that route
+- Any dir prefixed with an underscore is hidden, which allows you to create root level folders like `_styles` without exposing a `/styles` route/page
+- Next has some built in features such as `loading.js` which provide a generic loader for the `layout.js` section which the latter can help us quickly scaffold out layouts by using the children props. Both apply to child routes so you can have different loaders & nested layouts for example if your main app has a top nav that has page routes and then a child page includes a side nav with different child route components
+- Next also has a `global-error.js` (For root layout) or `error.js` which can display an error screen and also be nested this works for all errors and exceptions in the app around RENDERING not in callbacks or in the root layout
+- Next also has a `not-found.js` which can automatically be triggered, if its being overriden by a lower level `error.js` you can call it manually in the fetching function
+- We can also override tailwind styles with custom ones if we setup the project with tailwind using the `tailwind.config.js`
+- Anything in the public folder is accessible from anywhere in the app using an absolute path
+- Next also supports aliases imports so we can prevent import nesting e.g. `import Logo from '../../../.../../_components/Logo'` VS `import Logo from '@/app/_components/Logo';`
+- Next also provides metadata tags that can be global from the layout level that holds the apps `html` tag or if we export one at the component level can override the global metadata
+- Favicons can be setup extremely easily by just adding a favicon png to the app folder called `icon.png` and it just works
+- Next supports direct imports and configuration of google fonts as seen below, the you add the `font.className` to the body tag
+- Next provides and Image component api that automatically deliver srcsets for optimization and will display the best image for us. At its base usage you must provide the heigh and width attr but if you statically import as shown below then you unlock more features of the api like `quality` where you can compress images on the fly instead of having to run them through an external compressor
+- For images that we are not hosting on our server i.e they come from a db or cms and we need to set the src attr to a string, then we need to set the fill attr on the Image component and then make a parent container with `relative object-cover aspect-square` and the set the aspect ratio what ever we want
+- Dynamic pages are added as nested folders using `[]` notation e.g. `[cabinId]` then adding the `page.js` component in that folder as normal
+
+
+```jsx
+import Navigation from "@/app/_components/Navigation";
+import Logo from '@/app/_components/Logo';
+
+import {Josefin_Sans} from 'next/font/google';
+
+const josefin = Josefin_Sans({
+  subsets: ['latin'],
+  display: 'swap'
+})
+
+import '@/app/_styles/globals.css'
+
+export const metadata = {
+  // title: "The Wild Oasis",
+  title: {
+    template: 'The Wild Oasis - %s',
+    default: 'The Wild Oasis'
+  },
+  description: "Luxurious cabin hotel located in the italian dolomites, surrounded by beautiful mountains and dark forests"
+};
+
+function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body className={`${josefin.className} bg-primary-950 text-primary-100 min-h-screen`}>
+        <header>
+          <Logo></Logo>
+          <Navigation></Navigation>
+        </header>
+        <main>{children}</main>
+        <footer>Copyright by Wild Oasis</footer>
+      </body>
+    </html>
+  );
+}
+
+export default RootLayout;
+
+```
+
+```js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: "#E1E8EF",
+          100: "#D4DEE7",
+          200: "#B7C7D7",
+          300: "#99B0C7",
+          400: "#7C99B6",
+          500: "#5E82A6",
+          600: "#4C6B8A",
+          700: "#3C546C",
+          800: "#2C3D4F",
+          900: "#1B2631",
+          950: "#141C24",
+        },
+        accent: {
+          50: "#FAF5F0",
+          100: "#F4ECE1",
+          200: "#E8D6BF",
+          300: "#DDC2A2",
+          400: "#D2AF84",
+          500: "#C69963",
+          600: "#B78343",
+          700: "#926835",
+          800: "#6C4D28",
+          900: "#4B351B",
+          950: "#382814",
+        },
+      },
+    },
+  },
+  plugins: [],
+};
+```
+
+
+```jsx
+
+export const metadata = {
+  // title: "The Wild Oasis",
+  title: {
+    template: 'The Wild Oasis - %s',
+    default: 'The Wild Oasis'
+  },
+  description: "Luxurious cabin hotel located in the italian dolomites, surrounded by beautiful mountains and dark forests"
+};
+
+```
+
+```jsx
+import Image from 'next/image';
+import Link from 'next/link'
+import logo from "@/public/logo.png"
+
+function Logo() {
+  return (
+    <Link href="/" className="flex items-center gap-4 z-10">
+      {/* <Image src="/logo.png" height="60" width="60" alt="The Wild Oasis logo" /> */}
+      <Image src={logo} quality={100} height="60" width="60" alt="The Wild Oasis logo" />
+      <span className="text-xl font-semibold text-primary-100">
+        The Wild Oasis
+      </span>
+    </Link>
+  );
+}
+
+export default Logo;
+
+```
+
+```jsx
+<Image src={bg} fill placeholder="blur" quality={80} className="object-cover object-top" alt="Mountains and forests with two cabins" />
+```
+
+
+
+```jsx
+<div className="col-span-2">
+  <div className="relative object-cover aspect-square">
+    <Image
+      src="/about-2.jpg"
+      fill
+      alt="Family that manages The Wild Oasis"
+    />
+  </div>
+</div>
+```
+
+
+```jsx
+"use client"
+
+export default function Error({error, reset}) {
+  return (
+    <main className='flex justify-center items-center flex-col gap-6'>
+      <h1 className='text-3xl font-semibold'>Something went wrong!</h1>
+      <p className='text-lg'>{error.message}</p>
+
+      <button onClick={reset} className='inline-block bg-accent-500 text-primary-800 px-6 py-3 text-lg'>
+        Try again
+      </button>
+    </main>
+  );
+}
+```
+
+
+```jsx
+import { notFound } from 'next/navigation'
+
+export async function getCabin(id) {
+  const { data, error } = await supabase
+    .from('cabins')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  // For testing
+  // await new Promise((res) => setTimeout(res, 1000));
+
+  if (error) {
+    console.error(error);
+    notFound();
+  }
+
+  return data;
+}
+```
+
+### Data Fetching/Streaming, Caching, Rendering
+
+#### Suspense (Streaming)
+
+- Built in react component that we can use to catch/isolate components (or entire subtrees) that are not ready to be rendered ("suspending")
+- Native way to support async operations in a declarative way instead of using an `isLoading` var in  render logic
+- Must wrap the async work in a child component
+- Suspending is cause by async tasks:
+1. Fetching data (ONLY with a suspense supported library)
+2. Loading code (With reacts lazy loading)
+
+If we add a suspense boundary at a lower level than is overrides any at a higher level as is the case below. The app itself has a `loading.js` spinner that before adding the suspense would NOT display the copy text but instead a whole page spinner. This allows us to display the copy text while just waiting on the suspending component that is fetching the data
+
+```jsx
+
+import CabinList from "@/app/_components/CabinList";
+import { Suspense } from "react";
+import Spinner from "../_components/Spinner";
+
+export const metadata = {
+  title: "Cabins",
+};
+
+async function Page() {
+  return (
+    <div>
+      <h1 className="text-4xl mb-5 text-accent-400 font-medium">
+        Our Luxury Cabins
+      </h1>
+      <p className="text-primary-200 text-lg mb-10">
+        Cozy yet luxurious cabins, located right in the heart of the Italian
+        Dolomites. Imagine waking up to beautiful mountain views, spending your
+        days exploring the dark forests around, or just relaxing in your private
+        hot tub under the stars. Enjoy nature&apos;s beauty in your own little
+        home away from home. The perfect spot for a peaceful, calm vacation.
+        Welcome to paradise.
+      </p>
+
+      <Suspense fallback={<Spinner />}>
+        <CabinList></CabinList>
+      </Suspense>
+    </div>
+  );
+}
+
+export default Page;
+```
+
+#### Static VS Dynamic rendering
+
+
+| STATIC RENDERING | DYNAMIC RENDERING |
+| :--- | :--- |
+| HTML is generated at **built time**, or periodically in the background by re-fetching data (ISR, *more on this later*) | HTML is generated at **request time** (for each new request reaches the server) |
+| Useful when data **doesn't change often** and is **not personalized** to user (e.g. product page) | Makes sense if:<br>1. The **data changes frequently** and is **personalized** to the user (e.g. cart)<br>2. Rendering a route requires information that **depends on request** (e.g. search params) |
+| **Default rendering strategy** in Next.js (even when a page or component fetches data) | A route **automatically switches to dynamic** rendering in certain conditions (*next slide*) |
+| When deployed to **Vercel**, each static route is automatically hosted on a CDN (Content Delivery Network) | When deployed to **Vercel**, each dynamic route becomes a serverless function |
+| If all routes of an app are static, the entire app can be **exported as a static site** (SSG) | |
+
+
+Dynamic Rendering: 
+
+- Usually, developers **don't directly choose** whether a route should be static or dynamic. Next.js will **automatically switch to dynamic** rendering in the following scenarios:
+  1. The route has a **dynamic segment** (*page uses `params`*)
+  2. **`searchParams` are used** in the *page component* (e.g., `/product?quantity=23`)
+  3. **`headers()` or `cookies()` are used** in any of the route's *server components*
+  4. An **uncached data request** is made in any of the route's *server components*
+
+- This is necessary because any of these values **can not be known** by Next.js at built time
+
+- We can also **force** Next.js to render a route dynamically *(Note: These influence caching — see point 4, more on this later)*:
+  - `export const dynamic = 'force-dynamic';` from *page.js*
+  - `export const revalidate = 0;` from *page.js*
+  - `{ cache: 'no-store' }` added to a **fetch request** in any of the route's *server components*
+  - `noStore()` in any of the route's *server components*
+
+
+Other Terminology:
+
+- **Content Delivery Network (CDN):** A network of servers located around the globe that cache and deliver a website's **static content** (HTML, CSS, JS, images) from as close as possible to each user.
+
+- **Serverless computing:** With the serverless computing model, we can run application code, usually back-end code, without managing the server ourselves. Instead, we can just run single functions on a cloud provider: **serverless functions**. The server is initialized and active only for the duration the serverless function is running, unlike a traditional Node.js app where the server is constantly running. *Remember:* each dynamic route becomes a serverless function.
+
+- **The "edge":** "As close as possible to the user". A CDN is part of an "edge" network, but there is also **serverless "edge" computing**. This is serverless computing that does not happen on a central server, but on a network that's distributed around the globe, as close as possible to the user (like a CDN but for running code). *Important:* we can select certain routes to run on the edge when deployed to Vercel.
+
+- **Incremental Static Regeneration (ISR):** A Next.js feature that allows developers to update the content of a **static page, in the background**, even after the website has already been built and deployed. This happens by **re-fetching the data** of a component or entire route after a certain interval. *More on this later*
+
+
+#### Making Dynamic Pages Static
+
+> *Note*
+> THIS MAY SEEM GREAT, BUT THE ROUTER CACHE WILL ONLY REVALIDATE AFTER 5 MIN ON STATIC PAGES
+> This means any under laying data from a CRM or attached application controlling a store for example will have to wait 5 minutes. If you keep dynamic routes then its 30 seconds as of Next JS 14
+
+We can force Next to render pages as static especially for example in the cabins app we only have 8 cabin pages and its the only dynamically rendered page. We can check this by running `npm run build` which tells us which pages are dynamic. This would allow us to generate an full SSG and deploy on any static site provider we wanted.
+
+```jsx
+// Put this on the dynamic page route
+import { getCabin, getCabins } from "@/app/_lib/data-service";
+
+export async function generateStaticParams() {
+  const cabins = await getCabins();
+  // Make sure this object key matches the dynamic route param i.e cabinId
+  const ids = cabins.map((cabin) => ({cabinId: String(cabin.id)}));
+  console.log(ids);
+  return ids;
+}
+```
+
+Then add `output: 'export'` to your `next.config` file before running `npm run build`. Then you just take the `out` dir and deploy to any hosting provider. If its dynaic then deployment is harder if its not on Vercel, the company that owns Next.
+
+The image wont work if using the Next Image component as it optimizes/runs things on images on a server live so we'd have to go back to using regular img tags or using a service like [cloudinary](https://cloudinary.com/)
+
+#### Partial Pre-Rendering
+
+- **Idea/problem:** Most pages don't need to be 100% static or 100% dynamic
+
+- **Solution:** Partial Pre-Rendering
+
+- **New rendering strategy** that combines **static** and **dynamic** rendering in the same route
+  1. A **static** (*pre-rendered*) shell is served immediately from a CDN, leaving holes for dynamic content
+  2. The slower **dynamic** content is streamed in as it's rendered on the server
+
+- **Result:** Even faster pages that can mostly be delivered from the edge (CDN) even when there are small dynamic parts.
+
+
+> **Note:** As of Next.js 14, PPR is **highly experimental** and should not be used in production
+
+- PPR needs to be **turned on** in config file
+- By default, as much as possible of any route will be **statically rendered**, creating a **static shell**
+- Dynamic parts (components) should be placed inside **Suspense boundaries**
+- There are no new APIs to learn
+- These boundaries tell Next.js that **anything within the boundary is dynamic**
+- The boundary prevents the dynamic part (e.g. reading a header or making a non-cached fetch request) from spreading onto the entire route.
+- We provide a **static fallback** to be shown while the dynamic part is rendering
+- Dynamic components or sub-trees are **inserted** into the static shell as they become available
+
+
+Keep in mind PPR deals with the server requests for html. E.g. Having a dynamic route that isnt set to static will cause requests for dynamic html.
+
+RSC are different where they are dealing with JS interactivity in the browser with hydration
+
+The 2 concepts are different but work in tandem close by
+
+
+#### Caching
+
+Only works in production mode. So to check caching make a package.json script that runs `next build && next start`. Keep in mind this isn't a dev server so you will need to restart your server on every change
+
+
+- **Caching:** Storing fetched or computed data in a temporary location for future access, instead of having to re-fetch or re-compute the data every time it's needed
+- Next.js caches **very aggressively:** everything that is possible to cache, is cached
+- Next.js provides APIs for **cache revalidation:** removing data from the cache and updating it with **fresh data** (re-fetched or re-computed)
+
+- Makes Next.js apps **more performant** and **saves costs** (computing and data access)
+- **Caching always ON by default:** strange and unexpected behavior in some situations. Some caches can't be turned off
+- **Very confusing:** Many different Next.js APIs affect and control caching
+
+
+The Caching Mechanisms:
+
+
+| | REQUEST MEMOIZATION | DATA CACHE | FULL ROUTE CACHE | ROUTER CACHE |
+| :--- | :--- | :--- | :--- | :--- |
+| **Where?** | Server | Server | Server | Client |
+| **What data?** | Data fetched with similar GET requests (same url and options in fetch function) | Data fetched in a route or a single fetch request | Entire static pages (HTML and RSC payload) | Pre-fetched and visited pages: static and dynamic |
+| **How long?** | One page request (one render, one user) | Indefinitely, even across re-deploys (can revalidate or opt out) | Until the "Data cache" is invalidated (or app is re-deployed) | 30 sec dynamic / 5 min static (throughout one user session) |
+| **Enables** | No need to fetch at the top of tree: the **same fetch in multiple components only makes one request** *(Note: Only in components, not route handlers or server actions)* | Data for static pages + ISR when revalidated | Static pages | SPA-like navigation (instant navigation and no full reloads) |
+
+> **Note:** This is the behavior in **production** mode. Caching doesn't work in development.
+
+
+Revalidation/Opting Out:
+
+
+| | REQUEST MEMOIZATION | DATA CACHE & FULL ROUTE CACHE | ROUTER CACHE |
+| :--- | :--- | :--- | :--- |
+| **How to revalidate?** | N.A. | - **Time-based (automatic) for all data on page:** `export const revalidate = <time>;` (*page.js*)<br>- **Time-based (automatic) for one data request:** `fetch('...', { next: { revalidate: <time>} })`<br>- **On-demand (manual):** `revalidatePath` or `revalidateTag`<br><br>*(Note: Revalidating Data Cache also revalidates Full Route Cache)* | - `revalidatePath` or `revalidateTag` in SA<br>- `router.refresh`<br>- `cookies.set` or `cookies.delete` in SA |
+| **How to opt out?** | `AbortController` | - **Entire page:** `export const revalidate = 0;` (*page.js*)<br>- **Entire page:** `export const dynamic = 'force-dynamic';` (*page.js*)<br>- **Individual request:** `fetch('...', { cache: 'no-store' })`<br>- **Individual server component:** `noStore()`<br><br>*(Note: These force the page to become dynamic, which also opts out of the Full Route Cache)* | **Not possible**<br><br>*(Note: Can be very problematic)* |
+
+
+#### Incremental Static Regeneration (ISR)
+
+With caching we can have static sites that never invalidate the cache or dynamic pages that invalidate the cache too frequently. Sometimes we dont need a cache to invalidate for a day, a week or a month.
+
+
+We can use this variable set in seconds as defined above to refetch our data. Important to note the opting out section of the table above and for the data/full route cache make the pages dynamic again.
+```jsx
+`export const revalidate = 0;`
+```
+
+### Client/Server Interactions
+
+THE SERVER-CLIENT BOUNDARY: FRONT-END VS. BACK-END
+
+1. TRADITIONAL
+
+```mermaid
+flowchart TB
+    BE["🌐 BACK-END [API]"]
+    FE["🧑‍💻 FRONT-END"]
+
+    BE -- "JSON DATA [GET]" --> FE
+    FE -- "MUTATIONS [POST, PUT ...]" --> BE
+
+    style BE fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style FE fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+```
+
+* 👉 Very clear server-client boundary
+* 👉 Communication happens via an API
+* 👉 Once JSON arrives from the back-end, the front-end takes over
+
+---
+
+2. NEXT.JS WITH RSC + SA
+
+```mermaid
+flowchart TB
+    BE1["BACK-END"]
+    FE1["FRONT-END"]
+    BE2["BACK-END"]
+    BE3["BACK-END"]
+    BE4["BACK-END"]
+    FE2["FRONT-END"]
+    FE3["FRONT-END"]
+
+    BE1 --- FE1
+    BE1 --- BE2
+    FE1 --- BE3
+    BE2 --- BE4
+    BE2 --- FE2
+    BE4 --- FE3
+
+    CC(("Client component")) -.-> FE1
+    SC(("Server component")) -.-> BE3
+
+    style BE1 fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style BE2 fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style BE3 fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style BE4 fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style FE1 fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style FE2 fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style FE3 fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style CC fill:transparent,stroke:none,color:#d9534f,font-weight:bold
+    style SC fill:transparent,stroke:none,color:#d9534f,font-weight:bold
+```
+
+* 👉 No clear separation between front-end and back-end anymore
+* 👉 "Knitting": pieces of server and client code interweave (composability)
+* 👉 Allow us to build true **full-stack applications** in just one codebase
+* 👉 No need for an intermediary API in many times
+
+---
+
+
+IMPORTING VS. RENDERING
+
+1. DEPENDENCY TREE (MODULE IMPORTS) vs. COMPONENT TREE
+
+Component Tree (Render Hierarchy)
+*Shows what actually gets rendered in the UI tree.*
+
+```mermaid
+flowchart TB
+    A["A (SC)"]
+    B["B (CC)"]
+    C["C (SC)"]
+    D["D (SC)"]
+    E1["E (CC)"]
+    E2["E (CC)"]
+    C_sub["C (CC)"]
+
+    A -- "renders" --- B
+    A --- C
+    B --- D
+    C --- E1
+    C --- E2
+    E1 --- C_sub
+
+    style A fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style C fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style D fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style B fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style E1 fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style E2 fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style C_sub fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+```
+
+* 🤔 **A client component (`B`) rendering a server component (`D`)?**
+  * 👉 Possible if **server component** is passed as prop (`children` or other)
+  * 👉 `D` has already been executed here...
+
+---
+
+SC Renders CC when passed as props(`A.jsx`)
+```jsx
+import B from 'B';
+import C from 'C';
+import D from 'D';
+
+function A() {
+  return (
+    <div>
+      <B>
+        <D>Hey 😎</D>
+      </B>
+      <C />
+    </div>
+  );
+}
+```
+
+Dependency Tree (Module Imports)
+*Shows where client-server boundaries are created via `"use client"`.*
+
+```mermaid
+flowchart TB
+    A["A (SC)"]
+    B["B (CC)<br/><i>'use client'</i>"]
+    D["D (SC)"]
+    C["C (SC)"]
+    
+    subgraph Boundary ["Client-server boundary"]
+        E1["E (CC)<br/><i>'use client'</i>"]
+        C_sub["C (CC)"]
+        E1 --- C_sub
+    end
+    
+    E2["E (CC)<br/><i>'use client'</i>"]
+
+    A -- "imports" --- B
+    A --- D
+    A --- C
+    C --- E1
+    C --- E2
+
+    style A fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style D fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style C fill:#f5b935,stroke:#d99b1e,color:#000,font-weight:bold
+    style B fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style E1 fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style E2 fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style C_sub fill:#4fa3e3,stroke:#2d7cb8,color:#000,font-weight:bold
+    style Boundary fill:transparent,stroke:#d9534f,stroke-width:2px,color:#d9534f,font-weight:bold
+```
+
+* 🤔 **Is `C` a server or a client component?**
+  * 👉 **It can be both!** A component imported inside the client-server boundary creates a *client component instance*.
+
+
+---
+
+2. SUMMARY: CLIENT VS. SERVER COMPONENTS
+
+| Rule | CLIENT COMPONENTS | SERVER COMPONENTS |
+| :--- | :--- | :--- |
+| 📦 **Can import** | **Only client components** *(can't go back in client-server boundary)* | **Client and server components** |
+| 📐 **Can render** | **Client components** and **server components passed as props** | **Client and server components** |
+
+
+---
+
+Because any child component from a CC that has crossed the client/server boundary with `"use client"` will be rendered as a CC (Even if its a server component as shown above - a component can be both SC & CC), we should strive to keep CC as close to the bottom of the tree as possible to keep performance from more SCs than CCs
+
+
+#### Custom API Endpoint w/ Route Handlers
+
+We can create an endpoint for example for affiliates who might want to consume our api data for custom purposes. 
+
+- We create routes that we want for the custom routes via folder and they cannot have a `page.js` instead they must have a `route.js` e.g api > cabins > [cabinId] > route.js
+- In here we can perform any regular HTTP request with the corresponding function name
+
+```js
+// route.js
+
+import { getCabin, getBookedDatesByCabinId } from "@/app/_lib/data-service";
+
+export async function GET(req, { params }) {
+  const { cabinId } = params;
+
+  try {
+    const [cabin, bookedDates] = await Promise.all([
+      getCabin(cabinId),
+      getBookedDatesByCabinId(cabinId),
+    ]);
+
+    console.log(cabin);
+
+    return Response.json({ cabin, bookedDates });
+  } catch (error) {
+    return Response.json({ message: "Cabin not found" });
+  }
+}
+
+// export async function POST() {}
+// etc...
 
 ```
